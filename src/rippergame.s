@@ -19,6 +19,8 @@ init:
     bsr         take_system
     bsr         savecopperlist
     bsr         setdefaultcopperlist
+    bsr         load_palette
+    bsr         init_bplpointers
     rts
     
 shutdown:
