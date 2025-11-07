@@ -7,9 +7,9 @@
 main:
     bsr         init
 mainloop:
-
-    btst        #6,CIAAPRA              ; left mouse button pressed?
-    bne         mainloop
+    bsr         isConfirmPressed        ; is confirm pressed?
+    btst        #0,d0
+    beq         mainloop
 
     bsr         shutdown
     rts
@@ -28,5 +28,6 @@ shutdown:
     bsr         release_system
     rts
 
+    INCLUDE       "controllerroutines.s"
     INCLUDE       "drawingroutines.s"
     INCLUDE       "systemroutines.s"

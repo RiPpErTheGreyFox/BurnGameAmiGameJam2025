@@ -1,1 +1,36 @@
 WIP of the AmiGameJam 2025 entry I'm working on
+
+AmiGameJam 2025 entry by RiPpEr253
+Started properly November 1st
+
+Side scrolling/single screen beat'em up/shooter where you play as a furry firefighter (two players/multiple characters with different attacks time permitting)
+
+Target system is a stock A500 (7mhz 68000, OCS, 512k Chipmem and no fast/slow mem) with game loaded from single 880k floppy (check compatible with HDD and on ECS/AGA via emulation)
+
+Resolution/Colour, 320x200 (NTSC), 320x256 (PAL), 32 colours 
+
+Art style: Metal Slug-esque, short stubby wide characters, equipped with firehoses/extinguishers
+
+Basic Gameplay: walk on screen, fire based enemies (like brimstone horrors) spawn and move about and throw fireballs
+
+16x16 tiles, full scrolling background, levels stored as files that are loaded from disk, each level has it's own tileset, use aseprite to manage them and export to plain ASCII text files
+
+Things needed:
+Tile Renderer - takes a tile and blits it onto the bitplane
+Level Manager - load level from text and setup tiles and map for scrolling
+Sprite Renderer - takes the metasprites in memory and ensures they're drawn
+^ Needs to handle mouse/players/projectiles/enemies
+Sound Manager - handles PCM/sound effects
+Music Manager - handles tracker music
+Control Manager - take joystick/CD32 controller/Keyboard input and set move flags (make keyboard remappable?), allow player 1/2 selectable
+Player Manager - keep track of everything for a single player, have two full managers
+Enemy Manager - handles enemy units (updates/ai/calling draws)
+Game Manager - owns the current game state and loop, player number, invoking the other mangers/subroutines as needed
+Scene Manager - probably has crossover with game manager
+Start Screen Manager - handles attract mode and allows player number selection
+
+Minimum viable product:
+Start screen with basic logo, firefighter moves onto nonscrolling unanimated background, enemies spawn at random intervals, firefighter can attack them, enemies move around at random and can attack randomly, PAL Amiga and possibly overspecced for testing, as long as player can die or clear X number of enemies, MVP is reached, basic sound effects are a bonus
+
+Stretch goals:
+Multiple players, multiple characters, XP system for the run, bosses, minibosses, multiple enemy types, multiple levels, scrolling levels, using copper to draw high-res score/info at the top of the screen, animated level tile sets, weapon pickups, health pickups, pop ups with dialogue, music, sound effects, NTSC support
