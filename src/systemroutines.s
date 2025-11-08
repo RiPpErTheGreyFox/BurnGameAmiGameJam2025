@@ -4,6 +4,8 @@
 
     SECTION CODE
 
+; takes full control of the system, saving it's state to be restored on program exit
+
 take_system:
     move.l      EXEC_BASE,a6            ; base address of Exec library
     lea         gfx_name(PC),a1         ; name of the library to open
@@ -31,6 +33,8 @@ take_system:
     move.w      #$7fff,DMACON(a5)       ; disables all DMA channels
     rts
 
+; releases full control of the system, restarting EXEC after resetting the state
+
 release_system:
     lea         CUSTOM,a5               ; base address of custom chips registers
     or.w        #$8000,old_dma          ; sets bit 15
@@ -46,6 +50,7 @@ release_system:
     move.w      old_intreq,INTREQ(a5)
     move.w      old_adkcon,ADKCON(a5)   ; restores old value of ADKCON
     move.l      EXEC_BASE,a6            ; base address of Exec
+    jsr         DisOwnBlitter(a6)       ; release blitter ownership
     jsr         Permit(a6)              ; enable OS multitasking
     jsr         Enable(a6)              ; enable OS interrupts
 
