@@ -4,16 +4,24 @@
 ;---------- Constants ---------
 
                     ;5432109876543210
-DMASET          EQU %1000001111000000     ; enable only copper, bitplane and blitter DMA
-NUM_COLORS      EQU 16
-N_PLANES        EQU 4
-DISPLAY_WIDTH   EQU 320
-DISPLAY_HEIGHT  EQU 256
+DMASET              EQU %1000001111000000     ; enable only copper, bitplane and blitter DMA
+NUM_COLORS          EQU 16
+N_PLANES            EQU 4
+DISPLAY_WIDTH       EQU 320
+DISPLAY_HEIGHT      EQU 256
 DISPLAY_PLANE_SIZE  EQU DISPLAY_HEIGHT*(DISPLAY_WIDTH/8)
-DISPLAY_ROW_SIZE EQU (DISPLAY_WIDTH/8)
-IMAGE_WIDTH     EQU 32
-IMAGE_HEIGHT    EQU 32
-IMAGE_PLANE_SIZE EQU IMAGE_HEIGHT*(IMAGE_WIDTH/8)
+DISPLAY_ROW_SIZE    EQU (DISPLAY_WIDTH/8)
+IMAGE_WIDTH         EQU 32
+IMAGE_HEIGHT        EQU 32
+IMAGE_PLANE_SIZE    EQU IMAGE_HEIGHT*(IMAGE_WIDTH/8)
+TILESET_WIDTH       EQU 320
+TILESET_HEIGHT      EQU 304
+TILESET_ROW_SIZE    EQU (TILESET_WIDTH/8)
+TILESET_PLANE_SIZE  EQU (TILESET_HEIGHT*TILESET_ROW_SIZE)
+TILESET_COLS        EQU 20
+TILEMAP_ROW_SIZE    EQU 268*2
+TILE_WIDTH          EQU 16
+TILE_HEIGHT         EQU 16
 
     SECTION CODE
 ; save the copperlist from the system to a variable to be restored later
@@ -83,41 +91,72 @@ wait_blitter:
     bne         .loop                   ; and then wait until it's zero
     rts
 
-; Draw a 32x32 pixel tile using blitter 
-; @params: a1 - address where to draw the tile
+; Draw a 16x16 pixel tile using blitter
+; @params: d0.w - tile index
+; @params: d2.w - x position of the screen where the tile will be drawn
+; @params: d3.w - y position of the screen where the tile will be drawn
 draw_tile:
-    movem.l     d0-d1/a0-a1,-(sp)            ; copy registers onto the stack
-    moveq       #N_PLANES-1,d1
-    lea         tile,a0                     ; source image address
+    movem.l     d0-a6,-(sp)                 ; copy registers onto the stack
+
+    ; calculate the screen address where to draw the tile
+    mulu        #DISPLAY_ROW_SIZE,d3        ; y_offset = y * DISPLAY_ROW_SIZE
+    lsr.w       #3,d2                       ; x_offset = x / 8
+    ext.l       d2
+    lea         screen,a1
+    add.l       d3,a1                       ; sums offsets to a1
+    add.l       d2,a1
+
+    ; calculates row and column of tile in tileset starting from index
+    ext.l       d0                          ; extend d0 to a longword because the destination operand of divu must be long
+    divu        #TILESET_COLS,d0
+    swap        d0
+    move.w      d0,d1                       ; the remainder indicates the tile column
+    swap        d0                          ; the quotient indicates the tile row
+
+    ; calculates the x,y coordinates of the tile in the tileset
+    lsl.w       #4,d0                       ; y = row * 16
+    lsl.w       #4,d1                       ; x = column * 16
+
+    ; calculate the offset to add to a0 to get the address of the source image
+    mulu        #TILESET_ROW_SIZE,d0        ; offset_y = y * TILESET_ROW_SIZE
+    lsr.w       #3,d1                       ; offset_x = x / 8
+    ext.l       d1
+
+    lea         tileset,a0                  ; source image address
+    add.l       d0,a0                       ; add y_offset
+    add.l       d1,a0                       ; add x_offset
+
+    moveq       #N_PLANES-1,d7
+
     bsr         wait_blitter
     move.w      #$ffff,BLTAFWM(a5)          ; don't use mask
     move.w      #$ffff,BLTALWM(a5)
     move.w      #$09f0,BLTCON0(a5)          ; enable channels A,D
                                             ; logical function = $f0, D=A
     move.w      #0,BLTCON1(a5)
-    move.w      #0,BLTAMOD(a5)
-    move.w      #(DISPLAY_WIDTH-IMAGE_WIDTH)/8,BLTDMOD(a5)  ; D channel modulus
+    move.w      #(TILESET_WIDTH-TILE_WIDTH)/8,BLTAMOD(a5)   ; A channel modulus
+    move.w      #(DISPLAY_WIDTH-TILE_WIDTH)/8,BLTDMOD(a5)  ; D channel modulus
 .loop:
     bsr         wait_blitter
     move.l      a0,BLTAPT(a5)               ; source address
     move.l      a1,BLTDPT(a5)               ; destination address
-    move.w      #64*32+2,BLTSIZE(a5)        ; blitsize: 32 rows for 2 words
-    add.l       #IMAGE_PLANE_SIZE,a0        ; advances to the next plane
+    move.w      #64*16+1,BLTSIZE(a5)        ; blitsize: 16 rows for 1 words
+    add.l       #TILESET_PLANE_SIZE,a0      ; advances to the next plane
     add.l       #DISPLAY_PLANE_SIZE,a1
-    dbra        d1,.loop
+    dbra        d7,.loop
     bsr         wait_blitter
 
-    movem.l     (sp)+,d0-d1/a0-a1           ; restore registers values from the stack
+    movem.l     (sp)+,d0-a6                ; restore registers values from the stack
     rts
 
     SECTION bss_data,BSS_C
 
-screen ds.b (DISPLAY_PLANE_SIZE*N_PLANES)   ; visible screen
+screen          ds.b (DISPLAY_PLANE_SIZE*N_PLANES)   ; visible screen
 
     SECTION graphics_data,DATA_C            ; segment loaded in CHIP RAM
 
-tile    incbin "assets/tile.raw"
-palette incbin "assets/rtype.pal"
+tileset         incbin "assets/gfx/rtype_tileset.raw"
+palette         incbin "assets/gfx/rtype.pal"
 
     SECTION copper_segment,DATA_C
 
