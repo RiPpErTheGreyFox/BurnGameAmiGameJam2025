@@ -7,11 +7,17 @@
 main:
     bsr         init
     
-    move.w      #196,d0                 ; map column to drawing from
-    bsr         fill_screen_with_tiles
+    move.w      camera_x,d0
+    lsr.w       #4,d0
+    move.w      d0,map_ptr
+    bsr         init_background
+    move.w      #16,bgnd_x
 
     
 mainloop:
+    bsr         wait_vblank
+    bsr         swap_buffers
+    bsr         scroll_background
     bsr         isConfirmPressed        ; is confirm pressed?
     btst        #0,d0
     beq         mainloop
@@ -20,16 +26,12 @@ mainloop:
     rts
 
 init:
-    lea         CUSTOM,a5
     bsr         take_system
-    bsr         savecopperlist
-    bsr         setdefaultcopperlist
     bsr         load_palette
     bsr         init_bplpointers
     rts
     
 shutdown:
-    bsr         restorecopperlist
     bsr         release_system
     rts
 

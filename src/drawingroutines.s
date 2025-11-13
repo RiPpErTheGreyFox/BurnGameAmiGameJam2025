@@ -1,60 +1,17 @@
 ;---------- Includes ----------
               INCDIR      "include"
               INCLUDE     "hw.i"
-;---------- Constants ---------
-
-                    ;5432109876543210
-DMASET              EQU %1000001111000000     ; enable only copper, bitplane and blitter DMA
-NUM_COLORS          EQU 16
-N_PLANES            EQU 4
-DISPLAY_WIDTH       EQU 320
-DISPLAY_HEIGHT      EQU 256
-DISPLAY_PLANE_SIZE  EQU DISPLAY_HEIGHT*(DISPLAY_WIDTH/8)
-DISPLAY_ROW_SIZE    EQU (DISPLAY_WIDTH/8)
-IMAGE_WIDTH         EQU 32
-IMAGE_HEIGHT        EQU 32
-IMAGE_PLANE_SIZE    EQU IMAGE_HEIGHT*(IMAGE_WIDTH/8)
-TILESET_WIDTH       EQU 320
-TILESET_HEIGHT      EQU 304
-TILESET_ROW_SIZE    EQU (TILESET_WIDTH/8)
-TILESET_PLANE_SIZE  EQU (TILESET_HEIGHT*TILESET_ROW_SIZE)
-TILESET_COLS        EQU 20
-TILEMAP_ROW_SIZE    EQU 268*2
-TILE_WIDTH          EQU 16
-TILE_HEIGHT         EQU 16
+              INCLUDE     "globals.i"
 
     SECTION CODE
-; save the copperlist from the system to a variable to be restored later
-savecopperlist:
-    move.l      gfx_base,a6
-    move.l      $26(a6),old_cop
-    jsr         wait_blitter
-    jsr         OwnBlitter(a6)          ; takes the blitter exclusive
-    rts
-        
-; set a default copperlist as defined by our game
-setdefaultcopperlist:
-    lea         CUSTOM,a5
-    move.w      #DMASET,DMACON(a5)
-    move.l      #copperlist,$dff080     ; insert the address of our copperlist in COP1LC
-    move.w      d0,$dff088              ; write any value (the content of d0 in this case) in COP1JMP to place the copper PC at the beginning of our copperlist
-    move.w      #0,$dff1fc              ; disable AGA
-    move.w      #$c00,$dff106
-    move.w      #$11,$10c(a5)
-    rts
-
-; restore the original copperlist that was saved from the system
-restorecopperlist:
-    lea         $dff000,a5
-    move.l      old_cop,COP1LC(a5)
-    move.w      #0,COPJMP1(a5)
-    rts
+;---------- Subroutines -------
 
 ; load palette into the copperlist
 ; @params: none
 ; @clobbers: a0, a1, d7
 
 load_palette:
+    movem.l     d0-a6,-(sp)                 ; copy registers onto the stack
     lea         palette,a0              ; pointer to palette data in memory
     lea         cop_palette+2,a1        ; pointer to palette data in copperlist
     moveq       #NUM_COLORS-1,d7        ; number of loop iterations
@@ -63,29 +20,33 @@ load_palette:
     add.w       #4,a1                   ; point to the next value in the copperlist
     dbra        d7,.loop                ; repeats the loop (NUM_COLOURS-1) times
 
+    movem.l     (sp)+,d0-a6                ; restore registers values from the stack
     rts
 
 ; initalises bitplane pointers
 ; @clobbers: a1, d0, d1
 
 init_bplpointers:
-    move.l      #screen,d0               ; address of image in d0
-    lea         bplpointers,a1          ; bitplane pointers in a1
-    move.l      #(N_PLANES-1),d1        ; number of loop iterations in d1
+    movem.l    d0-a6,-(sp)                                              ; copy registers into the stack
+
+    move.l     #dbuffer1,d0                                             ; address of image in d0
+    lea        bplpointers,a1                                           ; bitplane pointers in a1
+    move.l     #(N_PLANES-1),d1                                         ; number of loop iterations in d1
 .loop:
-    move.w      d0,6(a1)                ; copy low word of image address into BPLxPTL (low word of BPLxPT)
-    swap        d0                      ; swap high and low word of image address
-    move.w      d0,2(a1)                ; copy high word of the image addres into BPLxPTH (high word of BPLxPT)
-    swap        d0                      ; resets d0 to the initial condition
-    add.l       #DISPLAY_PLANE_SIZE,d0      ; point to the next bitplane
-    add.l       #8,a1                   ; point to next bplpointer
-    dbra        d1,.loop                ; repeats the loop for all planes
+    move.w     d0,6(a1)                                                 ; copy low word of image address into BPLxPTL (low word of BPLxPT)
+    swap       d0                                                       ; swap high and low word of image address
+    move.w     d0,2(a1)                                                 ; copy high word of image address into BPLxPTH (high word of BPLxPT)
+    swap       d0                                                       ; resets d0 to the initial condition
+    add.l      #DISPLAY_PLANE_SIZE,d0                                   ; point to the next bitplane
+    add.l      #8,a1                                                    ; point to next bplpointer
+    dbra       d1,.loop                                                 ; repeats the loop for all planes
+
+    movem.l    (sp)+,d0-a6                                              ; restore registers values from the stack
     rts 
 
 ; waits for the blitter to finish
 ; @clobbers a5
 wait_blitter:
-    lea         CUSTOM,a5
 .loop:
     btst.b      #6,DMACONR(a5)          ; if bit 6 is 1, the blitter is busy
     bne         .loop                   ; and then wait until it's zero
@@ -95,63 +56,196 @@ wait_blitter:
 ; @params: d0.w - tile index
 ; @params: d2.w - x position of the screen where the tile will be drawn
 ; @params: d3.w - y position of the screen where the tile will be drawn
+; @params: a1 - address of draw surface
 draw_tile:
+    movem.l    d0-a6,-(sp)                                              ; copy registers into the stack
+
+; calculates the destination address where to draw the tile
+    mulu       #BGND_ROW_SIZE,d3                                        ; y_offset = y * BGND_ROW_SIZE
+    lsr.w      #3,d2                                                    ; x_offset = x / 8
+    ext.l      d2
+    add.l      d3,a1                                                    ; sums offsets to a1
+    add.l      d2,a1
+
+; calculates row and column of tile in tileset starting from index
+    ext.l      d0                                                       ; extend d0 to a longword because the destination operand if divu must be long
+    divu       #TILESET_COLS,d0                              
+    swap       d0
+    move.w     d0,d1                                                    ; the rest indicates the tile column
+    swap       d0                                                       ; the quotient indicates the tile row
+
+; calculates the x,y coordinates of the tile in the tileset
+    lsl.w      #4,d0                                                    ; y = row * 16
+    lsl.w      #4,d1                                                    ; x = column * 16
+         
+; calculates the offset to add to a0 to get the address of the source image
+    mulu       #TILESET_ROW_SIZE,d0                                     ; offset_y = y * TILESET_ROW_SIZE
+    lsr.w      #3,d1                                                    ; offset_x = x / 8
+    ext.l      d1
+
+    lea        tileset,a0                                               ; source image address
+    add.l      d0,a0                                                    ; add y_offset
+    add.l      d1,a0                                                    ; add x_offset
+
+    moveq      #N_PLANES-1,d7
+    
+    bsr        wait_blitter
+    move.w     #$ffff,BLTAFWM(a5)                                       ; don't use mask
+    move.w     #$ffff,BLTALWM(a5)
+    move.w     #$09f0,BLTCON0(a5)                                       ; enable channels A,D
+                                                                           ; logical function = $f0, D = A
+    move.w     #0,BLTCON1(a5)
+    move.w     #(TILESET_WIDTH-TILE_WIDTH)/8,BLTAMOD(a5)                ; A channel modulus
+    move.w     #(BGND_WIDTH-TILE_WIDTH)/8,BLTDMOD(a5)                   ; D channel modulus
+.loop:
+    bsr        wait_blitter
+    move.l     a0,BLTAPT(a5)                                            ; source address
+    move.l     a1,BLTDPT(a5)                                            ; destination address
+    move.w     #64*16+1,BLTSIZE(a5)                                     ; blit size: 16 rows for 1 word
+    add.l      #TILESET_PLANE_SIZE,a0                                   ; advances to the next plane
+    ;add.l      #DISPLAY_PLANE_SIZE,a1
+    add.l      #BGND_PLANE_SIZE,a1
+    dbra       d7,.loop
+    bsr        wait_blitter
+
+    movem.l    (sp)+,d0-a6                                              ; restore registers values from the stack
+    rts
+
+; draw the background, copying it from background_surface via Blitter.
+; @params: d0.w - x position of the part of background
+; @params: a1 - buffer where to draw
+draw_background:
+    movem.l    d0-a6,-(sp)
+
+    moveq      #N_PLANES-1,d7
+    lea        bgnd_surface,a0
+    move.w     d0,d2
+    asr.w      #3,d0                                                    ; offset_x = x/8
+    and.w      #$fffe,d0                                                ; rounds to even addresses
+    ext.l      d0
+    add.l      d0,a0                                                    ; address of image to copy
+    and.w      #$000f,d2                                                ; selects the first 4 bits, which correspond to the shift
+    move.w     #$f,d3
+    sub.w      d2,d3
+    lsl.w      #8,d3                                                    ; moves the 4 shift bits to the position they occupy in BLTCON0
+    lsl.w      #4,d3
+    or.w       #$09f0,d3                                                ; inserts the 4 bits into the value to be assigned to BLTCON0
+.planeloop:
+    bsr        wait_blitter
+    move.l     a0,BLTAPT(a5)                                            ; channel A points to background surface
+    move.l     a1,BLTDPT(a5)                                            ; channel D points to draw buffer
+    move.w     #$ffff,BLTAFWM(a5)                                       ; no first word mask
+    move.w     #$0000,BLTALWM(a5)                                       ; masks last word
+    move.w     d3,BLTCON0(a5)                                            
+    move.w     #0,BLTCON1(a5)
+    move.w     #(BGND_WIDTH-VIEWPORT_WIDTH-16)/8,BLTAMOD(a5) 
+    move.w     #(DISPLAY_WIDTH-VIEWPORT_WIDTH-16)/8,BLTDMOD(a5)
+    move.w     #VIEWPORT_HEIGHT<<6+(VIEWPORT_WIDTH/16)+1,BLTSIZE(a5)
+    move.l     a0,d0
+    add.l      #BGND_PLANE_SIZE,d0                                      ; points a0 to the next plane
+    move.l     d0,a0
+    move.l     a1,d0
+    add.l      #DISPLAY_PLANE_SIZE,d0                                   ; points a1 to the next plane
+    move.l     d0,a1
+    dbra       d7,.planeloop
+
+    movem.l    (sp)+,d0-a6
+    rts
+
+; waits for the drawing beam to reach a given line
+; @params: d2.l - line
+wait_vline:
     movem.l     d0-a6,-(sp)                 ; copy registers onto the stack
 
-    ; calculate the screen address where to draw the tile
-    mulu        #DISPLAY_ROW_SIZE,d3        ; y_offset = y * DISPLAY_ROW_SIZE
-    lsr.w       #3,d2                       ; x_offset = x / 8
-    ext.l       d2
-    lea         screen,a1
-    add.l       d3,a1                       ; sums offsets to a1
-    add.l       d2,a1
+    lsl.l       #8,d2
+    move.l      #$1ff00,d1
+.wait:
+    move.l      VPOSR(a5),d0
+    and.l       d1,d0
+    cmp.l       d2,d0
+    bne.s       .wait
 
-    ; calculates row and column of tile in tileset starting from index
-    ext.l       d0                          ; extend d0 to a longword because the destination operand of divu must be long
-    divu        #TILESET_COLS,d0
-    swap        d0
-    move.w      d0,d1                       ; the remainder indicates the tile column
-    swap        d0                          ; the quotient indicates the tile row
+    movem.l     (sp)+,d0-a6                 ; restore registers onto the stack
+    rts
 
-    ; calculates the x,y coordinates of the tile in the tileset
-    lsl.w       #4,d0                       ; y = row * 16
-    lsl.w       #4,d1                       ; x = column * 16
+; waits for the vertical blank
+wait_vblank:
+    movem.l     d0-a6,-(sp)                 ; copy registers onto the stack
+    move.l      #236,d2
+    bsr         wait_vline
+    movem.l     (sp)+,d0-a6                 ; restore registers onto the stack
+    rts
 
-    ; calculate the offset to add to a0 to get the address of the source image
-    mulu        #TILESET_ROW_SIZE,d0        ; offset_y = y * TILESET_ROW_SIZE
-    lsr.w       #3,d1                       ; offset_x = x / 8
-    ext.l       d1
+; scrolls the background to the left
+scroll_background:
+    movem.l    d0-a6,-(sp)
 
-    lea         tileset,a0                  ; source image address
-    add.l       d0,a0                       ; add y_offset
-    add.l       d1,a0                       ; add x_offset
+    move.w     bgnd_x,d0                                                ; x position of the part of background to draw
+    move.l     draw_buffer,a1                                           ; buffer where to draw                                                  
+    bsr        draw_background
 
-    moveq       #N_PLANES-1,d7
+    ext.l      d0                                                       ; every 16 pixels draws a new column
+    divu       #16,d0
+    swap       d0
+    tst.w      d0                                                       ; remainder of bgnd_x/16 is zero?
+    beq        .draw_new_column
+    bra        .check_bgnd_end
+.draw_new_column:
+    add.w      #16,camera_x
+    add.w      #1,map_ptr
+    cmp.w      #269,map_ptr                                             ; end of map?
+    bge        .return
 
-    bsr         wait_blitter
-    move.w      #$ffff,BLTAFWM(a5)          ; don't use mask
-    move.w      #$ffff,BLTALWM(a5)
-    move.w      #$09f0,BLTCON0(a5)          ; enable channels A,D
-                                            ; logical function = $f0, D=A
-    move.w      #0,BLTCON1(a5)
-    move.w      #(TILESET_WIDTH-TILE_WIDTH)/8,BLTAMOD(a5)   ; A channel modulus
-    move.w      #(DISPLAY_WIDTH-TILE_WIDTH)/8,BLTDMOD(a5)  ; D channel modulus
+    move.w     map_ptr,d0                                               ; map column
+    move.w     bgnd_x,d2                                                ; x position = bgnd_x - 16
+    sub.w      #16,d2
+    lea        bgnd_surface,a1
+    bsr        draw_tile_column                                         ; draws the column to the left of the viewport
+
+    move.w     bgnd_x,d2                                                ; x position = bgnd_x + VIEWPORT_WIDTH
+    add.w      #VIEWPORT_WIDTH,d2 
+    lea        bgnd_surface,a1
+    bsr        draw_tile_column                                         ; draws the column to the right of the viewport
+.check_bgnd_end:
+    cmp.w      #16+VIEWPORT_WIDTH,bgnd_x                                ; end of background surface?
+    ble        .incr_x
+    move.w     #SCROLL_SPEED,bgnd_x                                     ; resets x position of the part of background to draw
+    bra        .return
+.incr_x       
+    add.w      #SCROLL_SPEED,bgnd_x                                     ; increases x position of the part of background to draw
+.return
+    movem.l    (sp)+,d0-a6
+    rts
+
+; swaps video buffers, causing draw_buffer to be displayed
+swap_buffers:
+    movem.l    d0-a6,-(sp)                                              ; copy registers into the stack
+
+    move.l     draw_buffer,d0                                           ; swaps the values ​​of draw_buffer and view_buffer
+    move.l     view_buffer,draw_buffer
+    move.l     d0,view_buffer
+    lea        bplpointers,a1                                           ; sets the bitplane pointers to the view_buffer 
+    moveq      #N_PLANES-1,d1                                            
 .loop:
-    bsr         wait_blitter
-    move.l      a0,BLTAPT(a5)               ; source address
-    move.l      a1,BLTDPT(a5)               ; destination address
-    move.w      #64*16+1,BLTSIZE(a5)        ; blitsize: 16 rows for 1 words
-    add.l       #TILESET_PLANE_SIZE,a0      ; advances to the next plane
-    add.l       #DISPLAY_PLANE_SIZE,a1
-    dbra        d7,.loop
-    bsr         wait_blitter
+    move.w     d0,6(a1)                                                 ; copies low word
+    swap       d0                                                       ; swaps low and high word of d0
+    move.w     d0,2(a1)                                                 ; copies high word
+    swap       d0                                                       ; resets d0 to the initial condition
+    add.l      #DISPLAY_PLANE_SIZE,d0                                   ; points to the next bitplane
+    add.l      #8,a1                                                    ; points to next bplpointer
+    dbra       d1,.loop                                                 ; repeats the loop for all planes
 
-    movem.l     (sp)+,d0-a6                ; restore registers values from the stack
+    movem.l    (sp)+,d0-a6                                              ; restore registers values from the stack
     rts
 
     SECTION bss_data,BSS_C
 
 screen          ds.b (DISPLAY_PLANE_SIZE*N_PLANES)   ; visible screen
+dbuffer1        ds.b (DISPLAY_PLANE_SIZE*N_PLANES)                            ; display buffers used for double buffering
+dbuffer2        ds.b (DISPLAY_PLANE_SIZE*N_PLANES) 
+
+bgnd_surface  ds.b       (BGND_PLANE_SIZE*N_PLANES)                               ; invisible surface used for scrolling background
+
 
     SECTION graphics_data,DATA_C            ; segment loaded in CHIP RAM
 
@@ -161,27 +255,38 @@ palette         incbin "assets/gfx/rtype.pal"
     SECTION copper_segment,DATA_C
 
 copperlist:
-    ; copperlist containing copper move instructions and data to fill it
-    dc.w DIWSTRT,$2c81                  ; display window start at ($81,$2c)
-    dc.w DIWSTOP,$2cc1                  ; display window stop at ($1c1,$12c)
-    dc.w DDFSTRT,$38                    ; display data fetch start at $38
-    dc.w DDFSTOP,$d0                    ; display data fetch stop at $d0
-    dc.w BPLCON1,0
-    dc.w BPLCON2,0
-    dc.w BPL1MOD,0
-    dc.w BPL2MOD,0
+; Let's start the display window 16 pixels after the default value, to cover the noise caused by shift during scrolling
+    dc.w       DIWSTRT,$2c91                                            ; display window start at ($91,$2c)
+    dc.w       DIWSTOP,$2cc1                                            ; display window stop at ($1c1,$12c)
+    dc.w       DDFSTRT,$38                                              ; display data fetch start at $38
+    dc.w       DDFSTOP,$d0                                              ; display data fetch stop at $d0
+    dc.w       BPLCON1,0                                          
+    dc.w       BPLCON2,0                                             
+    dc.w       BPL1MOD,0                                             
+    dc.w       BPL2MOD,0                                             
 
-    dc.w BPLCON0,$4200                  ; 4 bitplane lowres video mode   
+    dc.w       BPLCON0,$4200                                            ; 4 bitplane lowres video mode
+ 
 cop_palette:
-    dc.w COLOR00,0,COLOR01,0,COLOR02,0,COLOR03,0
-    dc.w COLOR04,0,COLOR05,0,COLOR06,0,COLOR07,0
-    dc.w COLOR08,0,COLOR09,0,COLOR10,0,COLOR11,0
-    dc.w COLOR12,0,COLOR13,0,COLOR14,0,COLOR15,0
-
+    dc.w       COLOR00,0,COLOR01,0,COLOR02,0,COLOR03,0
+    dc.w       COLOR04,0,COLOR05,0,COLOR06,0,COLOR07,0
+    dc.w       COLOR08,0,COLOR09,0,COLOR10,0,COLOR11,0
+    dc.w       COLOR12,0,COLOR13,0,COLOR14,0,COLOR15,0
+         
 bplpointers:
-    dc.w BPL1PTH,$0000,BPL1PTL,$0000
-    dc.w BPL2PTH,$0000,BPL2PTL,$0000
-    dc.w BPL3PTH,$0000,BPL3PTL,$0000
-    dc.w BPL4PTH,$0000,BPL4PTL,$0000
+    dc.w       BPL1PTH,$0000,BPL1PTL,$0000
+    dc.w       BPL2PTH,$0000,BPL2PTL,$0000
+    dc.w       BPL3PTH,$0000,BPL3PTL,$0000
+    dc.w       BPL4PTH,$0000,BPL4PTL,$0000
 
-    dc.w $ffff,$fffe                    ; END of copperlist
+sprite_prts:
+    dc.w       SPR0PT,0,SPR0PT+2,0
+    dc.w       SPR1PT,0,SPR1PT+2,0
+    dc.w       SPR2PT,0,SPR2PT+2,0
+    dc.w       SPR3PT,0,SPR3PT+2,0
+    dc.w       SPR4PT,0,SPR4PT+2,0
+    dc.w       SPR5PT,0,SPR5PT+2,0
+    dc.w       SPR6PT,0,SPR6PT+2,0
+    dc.w       SPR7PT,0,SPR7PT+2,0
+
+    dc.w       $ffff,$fffe                                              ; end of copperlist
