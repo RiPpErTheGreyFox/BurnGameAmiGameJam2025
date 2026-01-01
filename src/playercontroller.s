@@ -95,10 +95,14 @@ playercontrollerstart:
 
 update_players:
     ; update and draw player 1
+    lea         joystick1_instance,a4
     lea         pl_instance1,a6
+    ;bsr         move_player_with_joystick
     bsr         draw_player
     ; update and draw player 2
+    lea         joystick2_instance,a4
     lea         pl_instance2,a6
+    bsr         move_player_with_joystick
     bsr         draw_player
 
     rts
@@ -135,6 +139,41 @@ set_player_position:
 
     move.w      d0,player.x(a6)
     move.w      d1,player.y(a6)
+    
+    movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
+    rts
+
+; moves the player according to the directions of the joystick
+; @params: a4 - address of the joystick instance to update
+; @params: a6 - address of the player instance to update
+move_player_with_joystick:
+    movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
+
+    move.w      player.x(a6),d0
+    move.w      player.y(a6),d1
+
+    move.w      joystick.up(a4),d2
+    btst        #0,d2
+    beq         .no_up
+    sub.w       #1,d1
+.no_up:
+    move.w      joystick.down(a4),d2
+    btst        #0,d2
+    beq         .no_down
+    add.w       #1,d1
+.no_down:
+    move.w      joystick.left(a4),d2
+    btst        #0,d2
+    beq         .no_left
+    sub.w       #1,d0
+.no_left:
+    move.w      joystick.right(a4),d2
+    btst        #0,d2
+    beq         .no_right
+    add.w       #1,d0
+.no_right:
+
+    bsr         set_player_position
     
     movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
     rts

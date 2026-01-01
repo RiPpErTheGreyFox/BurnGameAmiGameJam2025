@@ -13,22 +13,20 @@ main:
     bsr         init_background
     move.w      #16,bgnd_x
 
-    lea pl_instance2,a6
-    move.w      #120,d0
-    move.w      #120,d1
-
-    bsr         set_player_position
-
-    
 mainloop:
     bsr         wait_vblank
     bsr         swap_buffers
     bsr         scroll_background
 
+    ; updated controllers
+    bsr         joystick_update
+
     ; test rendering of bob
     bsr         update_players
 
-    bsr         isConfirmPressed        ; is confirm pressed?
+;    bsr         isConfirmPressed        ; is confirm pressed?
+    lea         joystick1_instance,a6
+    move.w      joystick.button1(a6),d0
     btst        #0,d0
     beq         mainloop
 
