@@ -9,7 +9,8 @@
 				"args": [
 					"-m68000",
 					"-Fhunk",
-					"-linedebug"
+					"-linedebug",
+					"-ldots"
 				]
 			},
 			"vlink": {
@@ -30,6 +31,22 @@
 				"kind": "build",
 				"isDefault": true
 			}
+		},
+		{
+			"type": "amigaassembly",
+			"vasm": {
+				"enabled": true,
+				"command": "${config:amiga-assembly.binDir}/vasmm68k_mot",
+				"args": [
+					"-m68000",
+					"-Fhunk",
+					"-linedebug",
+					"-ldots"
+				],
+				"leaveWarnings": true
+			},
+			"problemMatcher": [],
+			"label": "amigaassembly: compile current file"
 		}
 	]
 }
