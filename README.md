@@ -1,7 +1,8 @@
 WIP of the AmiGameJam 2025 entry I'm working on
 
 AmiGameJam 2025 entry by RiPpEr253
-Started properly November 1st
+Started technically November 1st
+Started properly January 1st
 
 Side scrolling/single screen beat'em up/shooter where you play as a furry firefighter (two players/multiple characters with different attacks time permitting)
 
@@ -13,7 +14,7 @@ Art style: Metal Slug-esque, short stubby wide characters, equipped with firehos
 
 Basic Gameplay: walk on screen, fire based enemies (like brimstone horrors) spawn and move about and throw fireballs
 
-16x16 tiles, full scrolling background, levels stored as files that are loaded from disk, each level has it's own tileset, use aseprite to manage them and export to plain ASCII text files
+16x16 tiles, full scrolling background, levels stored as files that are loaded from disk (or statically compiled), each level has it's own tileset, use aseprite to manage them and export to plain ASCII text files
 
 Things needed:
 Tile Renderer - takes a tile and blits it onto the bitplane
@@ -28,6 +29,15 @@ Enemy Manager - handles enemy units (updates/ai/calling draws)
 Game Manager - owns the current game state and loop, player number, invoking the other mangers/subroutines as needed
 Scene Manager - probably has crossover with game manager
 Start Screen Manager - handles attract mode and allows player number selection
+
+List a things to make the MVP possible:
+Character on screen
+Controller moving character
+Character being affected by gravity
+Enemy spawning/moving/collision with player
+Projectile spawning/moving/collision with player
+background loading/drawing
+Sound playing
 
 Minimum viable product:
 Start screen with basic logo, firefighter moves onto nonscrolling unanimated background, enemies spawn at random intervals, firefighter can attack them, enemies move around at random and can attack randomly, PAL Amiga and possibly overspecced for testing, as long as player can die or clear X number of enemies, MVP is reached, basic sound effects are a bonus

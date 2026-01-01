@@ -52,6 +52,104 @@ wait_blitter:
     bne         .loop                   ; and then wait until it's zero
     rts
 
+
+; Draws a bob using the blitter
+; @params: a0 - image address
+; @params: a1 - mask address
+; @params: a2 - destination video buffer address
+; @params: d0.w - x position of the bob in pixels
+; @params: d1.w - y position of the bob in pixels
+; @params: d2.w - bob width in pixels
+; @params: d3.w - bob height in pixels
+; @params: d4.w - spritesheet column of the bob
+; @params: d5.w - spritesheet row of the bob
+; @params: a3.w - spritesheet width
+; @params: a4.w - spritesheet height
+draw_bob:
+    movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
+
+    ; calculate the destination address (D channel)
+    mulu.w      #DISPLAY_ROW_SIZE,d1                                ; offset_y = y * DISPLAY_ROW_SIZE
+    add.l       d1,a2                                               ; adds offset_y to destination address
+    move.w      d0,d6                                               ; copies x
+    lsr.w       #3,d0                                               ; offset_x = x/8
+    and.w       #$fffe,d0                                           ; makes offset_x even
+    add.w       d0,a2                                               ; adds offset_x to destination address
+
+    ; calculate source address (A and B Channel)
+    move.w      d2,d1                                               ; makes a copy of bob width in d1 
+    lsr.w       #3,d1                                               ; bob width in bytes (bob_width/8)
+    mulu        d1,d4                                               ; offset_x = column * (bob_width/8)
+    add.w       d4,a0                                               ; adds offset_x to the base address of the bob's image
+    add.w       d4,a1                                               ; and bob's mask
+    mulu        d3,d5                                               ; bob_height * row
+    move.w      a3,d1                                               ; copies spritesheet width in d1
+    asr.w       #3,d1                                               ; spritesheet_row_size = spritesheet_width / 8
+    mulu        d1,d5                                               ; offset_y = row * bob_height * spritesheet_row_size
+    add.w       d5,a0                                               ; adds offset_y to the base address of bob's image
+    add.w       d5,a1                                               ; and bob's mask
+
+    ; get the modulus of channels A and B
+    move.w      a3,d1                                               ; copies spritesheet_width in d1
+    sub.w       d2,d1                                               ; spritesheet_width - bob_width
+    sub.w       #16,d1                                              ; spritesheet_width - bob_width -16
+    asr.w       #3,d1                                               ; (spritesheet_width - bob_width -16)/8
+
+    ; now the C and D modulus
+    ; CD's modulus
+    lsr         #3,d2                                               ; bob_width / 8
+    add.w       #2,d2                                               ; adds 2 to the sprite width in bytes, due to the shift
+    move.w      #DISPLAY_ROW_SIZE,d4                                ; screen width in bytes
+    sub.w       d2,d4                                               ; modulus (d4) = screen_width - bob_width
+
+    ; calculate the shift value for Chan A,B (d6) and value of BLTCON0 (d5)
+    and.w       #$000f,d6                                           ; selects the first 4 bits of x
+    lsl.w       #8,d6                                               ; moves the shift value to the upper nibble
+    lsl.w       #4,d6                                               ; so as to thave the value to insert in BLTCON1
+    move.w      d6,d5                                               ; copy to calculate the value to insert in BLTCON0
+    or.w        #$0fca,d5                                           ; value to insert in BLTCON0
+                                                                    ; logic function LF = $ca
+
+    ; get the blit size (d3)
+    lsl.w       #6,d3                                               ; bob_height << 6
+    lsr.w       #1,d2                                               ; bob_width/2 (in word)
+    or          d2,d3                                               ; combines the dimensions into the value to be inserted into BLTSIZE
+
+    ; calculate the size of the BOB spritesheet bitplane
+    move.w      a3,d2                                               ; copies spritesheet_width in d2
+    lsr.w       #3,d2                                               ; spritesheet_width/8
+    and.w       #$fffe,d2                                           ; makes even
+    move.w      a4,d0                                               ; spritesheet_height
+    mulu        d0,d2                                               ; multiplies by the height
+
+    ; inits the registers that remain constant
+    bsr         wait_blitter
+    move.w      #$ffff,BLTAFWM(a5)                                  ; first word of channel A: no mask
+    move.w      #$0000,BLTALWM(a5)                                  ; last word of channel A: reset all bits
+    move.w      d6,BLTCON1(a5)                                      ; shift value for channel A
+    move.w      d5,BLTCON0(a5)                                      ; activates all 4 channels, logic_function=$CA,shift
+    move.w      d1,BLTAMOD(a5)                                      ; modules for channels A,B
+    move.w      d1,BLTBMOD(a5)
+    move.w      d4,BLTCMOD(a5)                                      ; modules for channels C,D
+    move.w      d4,BLTDMOD(a5)
+    moveq       #N_PLANES-1,d7                                      ; number of cycle repitions
+
+    ; copy cycle for each bitplane
+.plane_loop:
+    bsr         wait_blitter
+    move.l      a1,BLTAPT(a5)                                       ; Channel A: bob's mask
+    move.l      a0,BLTBPT(a5)                                       ; Channel B: bob's image
+    move.l      a2,BLTCPT(a5)                                       ; Channel C: draw buffer
+    move.l      a2,BLTDPT(a5)                                       ; Channel D: draw buffer
+    move.w      d3,BLTSIZE(a5)                                      ; blit size and starts blit
+
+    add.l       d2,a0                                               ; points to the next bitplane
+    add.l       #DISPLAY_PLANE_SIZE,a2
+    dbra        d7,.plane_loop                                      ; repeats the cycle for each bitplane
+
+    movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
+    rts
+
 ; Draw a 16x16 pixel tile using blitter
 ; @params: d0.w - tile index
 ; @params: d2.w - x position of the screen where the tile will be drawn
@@ -251,6 +349,9 @@ bgnd_surface  ds.b       (BGND_PLANE_SIZE*N_PLANES)                             
 
 tileset         incbin "assets/gfx/rtype_tileset.raw"
 palette         incbin "assets/gfx/rtype.pal"
+
+ship_gfx        incbin "assets/gfx/ship.raw"                        ; ship spritesheet 96x30, 3cols x 1 row, frame size: 32x30
+ship_mask       incbin "assets/gfx/ship.mask"
 
     SECTION copper_segment,DATA_C
 
