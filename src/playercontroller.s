@@ -110,6 +110,7 @@ update_players:
     lea         pl_instance2,a6
     bsr         move_player_with_joystick
     bsr         process_player_movement
+    bsr         updateAnimation
     bsr         draw_player
 
     rts
@@ -294,8 +295,12 @@ move_player_with_joystick:
     movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
     rts
 
-; ONLY TO BE CALLED FROM move_player_with_joystick
+; should be called by move_player_with_joystick
+; @params: a4 - address of the joystick instance to update
+; @params: a6 - address of the player instance to update
 adjustXVelocity:
+    move.w      player.velocity_x(a6),d4                            ; d4 = velocity_x
+
     ; if increasing, then increase velocity, otherwise decay it
     move.w      joystick.right(a4),d6
     cmpi.w      #1,d6                                               ; test if joystick is held to right
@@ -327,4 +332,32 @@ adjustXVelocity:
     subq        #PLAYER_DECELERATION,d4                             ; reduce by deceleration
 .XVelPosCheckDone
 
+    ; save the velocities
+    move.w      d4,player.velocity_x(a6)
+    rts
+
+
+; does all the animation updating for a player
+; TODO: Do frame swapping with lookup tables and the like
+; @params: a6 - address of the player instance to update
+updateAnimation:
+    move.w      player.velocity_x(a6),d4                            ; d4 = velocity_x
+
+    tst         d4
+    beq         .idleAnim
+    blt         .leftAnim
+    bgt         .rightAnim
+
+.idleAnim
+    move.w      #PLAYER_ANIM_IDLE,d1
+    bra         .EndOfFunc
+.leftAnim
+    move.w      #PLAYER_ANIM_UP,d1
+    bra         .EndOfFunc
+.rightAnim
+    move.w      #PLAYER_ANIM_DOWN,d1
+    bra         .EndOfFunc
+    
+.EndOfFunc
+    move.w      d1,player.current_frame(a6)
     rts
