@@ -4,7 +4,7 @@
 ;---------- Constants ---------
 PLAYER_WIDTH                    equ 32                      ; width in pixels
 PLAYER_WIDTH_B                  equ (PLAYER_WIDTH/8)        ; width in bytes
-PLAYER_HEIGHT                   equ 30                      ; height in pixels
+PLAYER_HEIGHT                   equ 32                      ; height in pixels
 PLAYER_STARTING_POSX            equ 16                      ; starting position
 PLAYER_STARTING_POSY            equ 81
 PLAYER_VELOCITY_X               equ 2                       ; default speed in pixel/frame
@@ -20,7 +20,7 @@ PLAYER_ANIM_EXPL                equ 3
 PLAYER_FRAME_SIZE               equ (PLAYER_WIDTH_B*PLAYER_HEIGHT)
 PLAYER_MASK_SIZE                equ (PLAYER_WIDTH_B*PLAYER_HEIGHT)
 PLAYER_SPRITESHEET_WIDTH        equ 96
-PLAYER_SPRITESHEET_HEIGHT       equ 30
+PLAYER_SPRITESHEET_HEIGHT       equ 32
 PLAYER_STATE_ACTIVE             equ 0
 PLAYER_STATE_HIT                equ 1
 PLAYER_STATE_INVINCIBLE         equ 2
@@ -60,8 +60,8 @@ player.length           rs.b        0
 ; player instance
 pl_instance1            dc.w    PLAYER_STARTING_POSX,PLAYER_STARTING_POSY   ;
                         dc.w    PLAYER_VELOCITY_X,PLAYER_VELOCITY_Y         ;
-                        dc.l    ship_gfx                                    ;
-                        dc.l    ship_mask                                   ;
+                        dc.l    player_gfx                                  ;
+                        dc.l    player_mask                                 ;
                         dc.w    PLAYER_ANIM_IDLE                            ;
                         dc.w    PLAYER_STATE_ACTIVE                         ;
                         dc.w    PLAYER_MAX_ANIM_DELAY                       ;
@@ -75,8 +75,8 @@ pl_instance1            dc.w    PLAYER_STARTING_POSX,PLAYER_STARTING_POSY   ;
                         ; player instance
 pl_instance2            dc.w    64,PLAYER_STARTING_POSY   ;
                         dc.w    PLAYER_VELOCITY_X,PLAYER_VELOCITY_Y         ;
-                        dc.l    ship_gfx                                    ;
-                        dc.l    ship_mask                                   ;
+                        dc.l    player_gfx                                  ;
+                        dc.l    player_mask                                 ;
                         dc.w    PLAYER_ANIM_UP                              ;
                         dc.w    PLAYER_STATE_ACTIVE                         ;
                         dc.w    PLAYER_MAX_ANIM_DELAY                       ;

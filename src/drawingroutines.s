@@ -347,11 +347,11 @@ bgnd_surface  ds.b       (BGND_PLANE_SIZE*N_PLANES)                             
 
     SECTION graphics_data,DATA_C            ; segment loaded in CHIP RAM
 
-tileset         incbin "assets/gfx/rtype_tileset.raw"
-palette         incbin "assets/gfx/rtype.pal"
+tileset         incbin "assets/gfx/test_tileset.raw"
+palette         incbin "assets/gfx/testsprite.pal"
 
-ship_gfx        incbin "assets/gfx/ship.raw"                        ; ship spritesheet 96x30, 3cols x 1 row, frame size: 32x30
-ship_mask       incbin "assets/gfx/ship.mask"
+player_gfx      incbin "assets/gfx/testsprite.raw"                        ; ship spritesheet 96x30, 3cols x 1 row, frame size: 32x30
+player_mask     incbin "assets/gfx/testsprite.mask"
 
     SECTION copper_segment,DATA_C
 

@@ -1,0 +1,7 @@
+The commmands I need to automate for asset integration later
+
+./amigeconv.exe -f palette -p pal4 -c 16 .\rtype_tileset.png ..\rtype.pal
+
+./amigeconv.exe -f bitplane -d 4 ship.png ..\ship.raw
+
+./amigeconv.exe -f bitplane -m -d 1 ship.png ..\ship.mask
