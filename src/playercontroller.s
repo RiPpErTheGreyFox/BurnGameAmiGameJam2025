@@ -40,6 +40,8 @@ PLAYER_FLASH_DURATION           equ 3                       ; flashing duration 
 BASE_FIRE_INTERVAL              equ 7                       ; delay between two shots for base bullets
 BULLET_TYPE_BASE                equ 0                       ; types of bullets
 
+PLAYER_ANIMATION_FRAME_DELAY    equ 10
+
 ;-------- Data Structures -----
                         rsreset
 player.x                rs.w        1                       ; position
@@ -51,6 +53,7 @@ player.velocity_y       rs.w        1                       ; y velocity in subp
 player.bobdata          rs.l        1                       ; address of graphics data
 player.mask             rs.l        1                       ; address of graphics mask
 player.current_frame    rs.w        1                       ; current animation frame
+player.current_anim     rs.w        1
 player.state            rs.w        1                       ; current state
 player.anim_delay       rs.w        1                       ; delay between two animation frames
 player.inv_timer        rs.w        1                       ; timer for invulnerable state
@@ -68,6 +71,7 @@ pl_instance1            dc.w    PLAYER_STARTING_POSX,0,PLAYER_STARTING_POSY,0;
                         dc.w    0,0                                         ;
                         dc.l    player_gfx                                  ;
                         dc.l    player_mask                                 ;
+                        dc.w    0                                           ;
                         dc.w    PLAYER_ANIM_IDLE                            ;
                         dc.w    PLAYER_STATE_ACTIVE                         ;
                         dc.w    PLAYER_MAX_ANIM_DELAY                       ;
@@ -83,6 +87,7 @@ pl_instance2            dc.w    64,0,PLAYER_STARTING_POSY,0   ;
                         dc.w    0,0         ;
                         dc.l    player_gfx                                  ;
                         dc.l    player_mask                                 ;
+                        dc.w    0
                         dc.w    PLAYER_ANIM_UP                              ;
                         dc.w    PLAYER_STATE_ACTIVE                         ;
                         dc.w    PLAYER_MAX_ANIM_DELAY                       ;
@@ -129,8 +134,8 @@ draw_player:
     move.w      player.y(a6),d1                                     ; y position of the player in pixels
     move.w      #PLAYER_WIDTH,d2                                    ; player width in pixels
     move.w      #PLAYER_HEIGHT,d3                                   ; player height in pixels
-    move.w      player.current_frame(a6),d4                         ; spritesheet column of player
-    move.w      #0,d5                                               ; spritesheet row of player
+    move.w      player.current_anim(a6),d4                          ; spritesheet column of player
+    move.w      player.current_frame(a6),d5                         ; spritesheet row of player
     move.w      #PLAYER_SPRITESHEET_WIDTH,a3                        ; spritesheet width
     move.w      #PLAYER_SPRITESHEET_HEIGHT,a4                       ; spritesheet height
 
@@ -359,5 +364,5 @@ updateAnimation:
     bra         .EndOfFunc
     
 .EndOfFunc
-    move.w      d1,player.current_frame(a6)
+    move.w      d1,player.current_anim(a6)
     rts
