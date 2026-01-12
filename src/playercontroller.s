@@ -17,13 +17,14 @@ PLAYER_BOUNDARY_MAX_X           equ (0+DISPLAY_WIDTH-PLAYER_WIDTH)
 PLAYER_BOUNDARY_MIN_Y           equ 0
 PLAYER_BOUNDARY_MAX_Y           equ (VIEWPORT_HEIGHT-PLAYER_HEIGHT)
 PLAYER_ANIM_IDLE                equ 1
-PLAYER_ANIM_UP                  equ 0
-PLAYER_ANIM_DOWN                equ 2
+PLAYER_ANIM_WALK                equ 0
+PLAYER_ANIM_JUMP                equ 2
 PLAYER_ANIM_EXPL                equ 3
+PLAYER_MAX_FRAME_COUNT          equ 3                       ; only three frames of animation, static for now
 PLAYER_FRAME_SIZE               equ (PLAYER_WIDTH_B*PLAYER_HEIGHT)
 PLAYER_MASK_SIZE                equ (PLAYER_WIDTH_B*PLAYER_HEIGHT)
 PLAYER_SPRITESHEET_WIDTH        equ 96
-PLAYER_SPRITESHEET_HEIGHT       equ 32
+PLAYER_SPRITESHEET_HEIGHT       equ 96
 PLAYER_STATE_ACTIVE             equ 0
 PLAYER_STATE_HIT                equ 1
 PLAYER_STATE_INVINCIBLE         equ 2
@@ -33,7 +34,7 @@ PLAYER_STATE_INVINCIBLE         equ 2
 ; - hit: the player has been hit, collisions are disabled
 ; - invincible: the player is now invulnerable for a short time
 
-PLAYER_MAX_ANIM_DELAY           equ 4                       ; delay between two animation frames (in frames)
+PLAYER_MAX_ANIM_DELAY           equ 10                      ; delay between two animation frames (in frames)
 PLAYER_INV_STATE_DURATION       equ (50*5)                  ; duration of the invincible state (in frames)
 PLAYER_FLASH_DURATION           equ 3                       ; flashing duration (in frames)
 
@@ -53,9 +54,10 @@ player.velocity_y       rs.w        1                       ; y velocity in subp
 player.bobdata          rs.l        1                       ; address of graphics data
 player.mask             rs.l        1                       ; address of graphics mask
 player.current_frame    rs.w        1                       ; current animation frame
-player.current_anim     rs.w        1
+player.current_anim     rs.w        1                       ;
 player.state            rs.w        1                       ; current state
 player.anim_delay       rs.w        1                       ; delay between two animation frames
+player.anim_timer       rs.w        1                       ; timer for the anim_delay
 player.inv_timer        rs.w        1                       ; timer for invulnerable state
 player.flash_timer      rs.w        1                       ; timer for flashing
 player.visible          rs.w        1                       ; visibility flag: 1 visible, 0 not
@@ -75,6 +77,7 @@ pl_instance1            dc.w    PLAYER_STARTING_POSX,0,PLAYER_STARTING_POSY,0;
                         dc.w    PLAYER_ANIM_IDLE                            ;
                         dc.w    PLAYER_STATE_ACTIVE                         ;
                         dc.w    PLAYER_MAX_ANIM_DELAY                       ;
+                        dc.w    PLAYER_MAX_ANIM_DELAY                       ;
                         dc.w    PLAYER_INV_STATE_DURATION                   ;
                         dc.w    PLAYER_FLASH_DURATION                       ;
                         dc.w    1                                           ;
@@ -87,9 +90,10 @@ pl_instance2            dc.w    64,0,PLAYER_STARTING_POSY,0   ;
                         dc.w    0,0         ;
                         dc.l    player_gfx                                  ;
                         dc.l    player_mask                                 ;
-                        dc.w    0
-                        dc.w    PLAYER_ANIM_UP                              ;
+                        dc.w    0                                           ;
+                        dc.w    PLAYER_ANIM_WALK                            ;
                         dc.w    PLAYER_STATE_ACTIVE                         ;
+                        dc.w    PLAYER_MAX_ANIM_DELAY                       ;
                         dc.w    PLAYER_MAX_ANIM_DELAY                       ;
                         dc.w    PLAYER_INV_STATE_DURATION                   ;
                         dc.w    PLAYER_FLASH_DURATION                       ;
@@ -346,7 +350,10 @@ adjustXVelocity:
 ; TODO: Do frame swapping with lookup tables and the like
 ; @params: a6 - address of the player instance to update
 updateAnimation:
+; check for animation swap
     move.w      player.velocity_x(a6),d4                            ; d4 = velocity_x
+    move.w      player.current_frame(a6),d6                         ; d6 = current anim frame
+    move.w      player.anim_timer(a6),d7                            ; d7 = current frame timer
 
     tst         d4
     beq         .idleAnim
@@ -354,15 +361,33 @@ updateAnimation:
     bgt         .rightAnim
 
 .idleAnim
-    move.w      #PLAYER_ANIM_IDLE,d1
-    bra         .EndOfFunc
+    move.w      #PLAYER_ANIM_IDLE,d1                                ; swap the animation
+    bra         .EndAnimSwapCheck
 .leftAnim
-    move.w      #PLAYER_ANIM_UP,d1
-    bra         .EndOfFunc
+    move.w      #PLAYER_ANIM_JUMP,d1
+    bra         .EndAnimSwapCheck
 .rightAnim
-    move.w      #PLAYER_ANIM_DOWN,d1
-    bra         .EndOfFunc
-    
-.EndOfFunc
+    move.w      #PLAYER_ANIM_WALK,d1
+    bra         .EndAnimSwapCheck
+.EndAnimSwapCheck:
+
+.UpdateCurrentFrame:
+    ; decrement the timer
+    ; if timer = 0 then swap frame
+    subq        #1,d7
+    bne         .EndOfFunc
+.NextFrame:
+    move.w      player.anim_delay(a6),d7                            ; reset the timer
+    addq        #1,d6                                               ; increment the frame counter
+    cmpi        #PLAYER_MAX_FRAME_COUNT,d6                          ; check if we've hit the max frame counter
+    bne         .EndOfFunc                                          ; if not, jump over the reset
+.ResetFrames:
+    ; wraps around at the end of frames
+    move.w      #0,d6
+
+.EndOfFunc:
+; save all our changed variables before leaving
     move.w      d1,player.current_anim(a6)
+    move.w      d6,player.current_frame(a6)
+    move.w      d7,player.anim_timer(a6)
     rts
