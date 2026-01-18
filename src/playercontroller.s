@@ -43,6 +43,8 @@ BULLET_TYPE_BASE                equ 0                       ; types of bullets
 
 PLAYER_ANIMATION_FRAME_DELAY    equ 10
 
+
+
 ;-------- Data Structures -----
                         rsreset
 player.x                rs.w        1                       ; position
@@ -192,7 +194,7 @@ process_player_movement:
     cmpi.w      #PLAYER_SUBPIXEL_PER_PIXEL,d2
     bge         .spilloverXHigh
     bra         .checkYVelocity                                     ; otherwise we're done
-.XNegative
+.XNegative:
     add.w       d4,d2
     cmpi.w      #0,d2
     blt         .spilloverXLow
@@ -200,7 +202,7 @@ process_player_movement:
 .spilloverXHigh:
     ; run the loop to add pixels until subpixel's back below threshold
     addq        #1,d0                                               ; increment full pixel count
-    subi        #PLAYER_SUBPIXEL_PER_PIXEL,d2                                              ; reduce subpixel count by a full pixel
+    subi        #PLAYER_SUBPIXEL_PER_PIXEL,d2                       ; reduce subpixel count by a full pixel
     cmpi.w      #PLAYER_SUBPIXEL_PER_PIXEL,d2                       ; check if there's more pixels to process
     bge         .spilloverXHigh                                     ; loop
     bra         .checkYVelocity                                     ; otherwise we're done
@@ -213,11 +215,42 @@ process_player_movement:
     bra         .checkYVelocity
 
 .checkYVelocity:
+    ; check if velocity isn't zero                                  
     tst         d5
-    bne         .applyYVelocity
-    bra         .boundsCheck
+    bne         .applyYVelocity                                     ; if the test value came back with Z flag set
+    bra         .boundsCheck                                        ; just skip as there's no velocity to apply
 .applyYVelocity:
     ; YVelocity is a TODO:
+    ; check the current velocity for positive or negative
+    ; send to the correct branch
+    tst         d5                                                  ; compare against zero to get the flags
+    blt         .YNegative                                          ; if the negative flag is set then jump to neg
+.YPositive:
+    add         d5,d3                                               ; apply it to the current subpixel count
+    ; then add to the full pixel count
+    ; if subpixel > PLAYER_SUB PIXEL_PER_PIXEL then adjust the full count
+    cmpi.w      #PLAYER_SUBPIXEL_PER_PIXEL,d3
+    bge         .spilloverYHigh
+    bra         .boundsCheck                                        ; otherwise we're done
+.YNegative: 
+    add.w       d5,d3
+    cmpi.w      #0,d2
+    blt         .spilloverYLow
+    bra         .boundsCheck
+.spilloverYHigh:
+    ; run the loop to add pixels until subpixel's back below threshold
+    addq        #1,d1                                               ; increment full pixel count
+    subi        #PLAYER_SUBPIXEL_PER_PIXEL,d3                       ; reduce subpixel count by a full pixel
+    cmpi.w      #PLAYER_SUBPIXEL_PER_PIXEL,d3                       ; check if there's more pixels to process
+    bge         .spilloverYHigh                                     ; loop
+    bra         .boundsCheck                                        ; otherwise we're done
+.spilloverYLow:
+    ; run the loop to remove pixels until subpixel's back below threshold
+    subq        #1,d1
+    addi        #PLAYER_SUBPIXEL_PER_PIXEL,d2
+    cmpi.w      #0,d3
+    blt         .spilloverYLow
+    bra         .boundsCheck
 
 .boundsCheck:
     cmpi        #PLAYER_BOUNDARY_MAX_X,d0
@@ -241,12 +274,12 @@ process_player_movement:
     ble         .boundsLowY
     bra         .boundsCheckOver
 .boundsHighY
-    move.w      #PLAYER_BOUNDARY_MAX_Y,d0
+    move.w      #PLAYER_BOUNDARY_MAX_Y,d1
     move.w      #0,d3
     move.w      #0,d5
     bra         .boundsCheckOver
 .boundsLowY
-    move.w      #PLAYER_BOUNDARY_MIN_Y,d0
+    move.w      #PLAYER_BOUNDARY_MIN_Y,d1
     move.w      #0,d3
     move.w      #0,d5
 .boundsCheckOver
