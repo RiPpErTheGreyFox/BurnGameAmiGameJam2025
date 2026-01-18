@@ -21,8 +21,9 @@ mainloop:
     ; updated controllers
     bsr         joystick_update
 
-    ; test rendering of bob
+    ; run major updates
     bsr         update_players
+    bsr         update_enemies
 
 ;    bsr         isConfirmPressed        ; is confirm pressed?
     lea         joystick1_instance,a6
@@ -48,3 +49,4 @@ shutdown:
     INCLUDE         "systemroutines.s"
     INCLUDE         "levelhandler.s"
     INCLUDE         "playercontroller.s"
+    INCLUDE         "enemymanager.s"
