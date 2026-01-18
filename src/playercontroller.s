@@ -12,10 +12,13 @@ PLAYER_MAXVELOCITY_Y            equ 48
 PLAYER_SUBPIXEL_PER_PIXEL       equ 16                      ; how many subpixels are in each pixel
 PLAYER_ACCELERATION             equ 1                       ; in subpixels per frame
 PLAYER_DECELERATION             equ 1
+PLAYER_JUMP_VELOCITY_INIT       equ -30                     ; initial velocity to apply to character when jumping
 PLAYER_BOUNDARY_MIN_X           equ 16
 PLAYER_BOUNDARY_MAX_X           equ (0+DISPLAY_WIDTH-PLAYER_WIDTH)               
 PLAYER_BOUNDARY_MIN_Y           equ 0
 PLAYER_BOUNDARY_MAX_Y           equ (VIEWPORT_HEIGHT-PLAYER_HEIGHT)
+PLAYER_MOVEMENT_STATE_NORMAL    equ 0
+PLAYER_MOVEMENT_STATE_AIRBORNE  equ 1
 PLAYER_ANIM_IDLE                equ 1
 PLAYER_ANIM_WALK                equ 0
 PLAYER_ANIM_JUMP                equ 2
@@ -57,7 +60,8 @@ player.bobdata          rs.l        1                       ; address of graphic
 player.mask             rs.l        1                       ; address of graphics mask
 player.current_frame    rs.w        1                       ; current animation frame
 player.current_anim     rs.w        1                       ;
-player.state            rs.w        1                       ; current state
+player.state            rs.w        1                       ; current hard state
+player.movement_state   rs.w        1                       ; current movement state
 player.anim_delay       rs.w        1                       ; delay between two animation frames
 player.anim_timer       rs.w        1                       ; timer for the anim_delay
 player.inv_timer        rs.w        1                       ; timer for invulnerable state
@@ -78,6 +82,7 @@ pl_instance1            dc.w    PLAYER_STARTING_POSX,0,PLAYER_STARTING_POSY,0;
                         dc.w    0                                           ;
                         dc.w    PLAYER_ANIM_IDLE                            ;
                         dc.w    PLAYER_STATE_ACTIVE                         ;
+                        dc.w    PLAYER_MOVEMENT_STATE_NORMAL                ;
                         dc.w    PLAYER_MAX_ANIM_DELAY                       ;
                         dc.w    PLAYER_MAX_ANIM_DELAY                       ;
                         dc.w    PLAYER_INV_STATE_DURATION                   ;
@@ -88,13 +93,14 @@ pl_instance1            dc.w    PLAYER_STARTING_POSX,0,PLAYER_STARTING_POSY,0;
                         dc.w    BULLET_TYPE_BASE                            ;
 
                         ; player instance
-pl_instance2            dc.w    64,0,PLAYER_STARTING_POSY,0   ;
-                        dc.w    0,0         ;
+pl_instance2            dc.w    64,0,PLAYER_STARTING_POSY,0                 ;
+                        dc.w    0,0                                         ;
                         dc.l    player_gfx                                  ;
                         dc.l    player_mask                                 ;
                         dc.w    0                                           ;
                         dc.w    PLAYER_ANIM_WALK                            ;
                         dc.w    PLAYER_STATE_ACTIVE                         ;
+                        dc.w    PLAYER_MOVEMENT_STATE_NORMAL                ;
                         dc.w    PLAYER_MAX_ANIM_DELAY                       ;
                         dc.w    PLAYER_MAX_ANIM_DELAY                       ;
                         dc.w    PLAYER_INV_STATE_DURATION                   ;
@@ -115,6 +121,8 @@ update_players:
     lea         joystick1_instance,a4
     lea         pl_instance1,a6
     ;bsr         move_player_with_joystick
+    bsr         process_player_movement
+    bsr         updateAnimation
     bsr         draw_player
     ; update and draw player 2
     lea         joystick2_instance,a4
@@ -177,6 +185,56 @@ process_player_movement:
     move.w      player.velocity_x(a6),d4                            ; d4 = velocity_x
     move.w      player.velocity_y(a6),d5                            ; d5 = velocity_y
 
+    jsr         update_jump_velocity
+    jsr         apply_velocities
+    jsr         bounds_check
+    
+.EndOfFunc:
+    ; apply all the updates
+    move.w      d0,player.x(a6)                                     ; move the final stats back into memory
+    move.w      d1,player.y(a6)
+    move.w      d2,player.subpixel_x(a6)
+    move.w      d3,player.subpixel_y(a6)
+    move.w      d4,player.velocity_x(a6)
+    move.w      d5,player.velocity_y(a6)
+    movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
+    rts
+
+update_jump_velocity:
+    ; TODO: make it so that holding down the button reduces falling speed
+    ; decelerate down to the maximum negative speed
+    addi        #1,d5
+    ; do a max velocity test
+    cmp         #PLAYER_MAXVELOCITY_Y,d5
+    bgt         .clampYVelocity
+    bra         .endVelocityClamp
+.clampYVelocity:
+    move        #PLAYER_MAXVELOCITY_Y,d5
+    ; clamp max velocity
+.endVelocityClamp:
+.collisionCheck:
+    ; only check if we're moving down
+    tst         d5
+    blt         .falseResult                                        ; if velocity is negative, we're on our way up so don't check
+    ; if we hit something, stop and reset our state back to normal
+    ; collision check with temp register, increase it by 1 to check a pixel below us
+    move        d1,d6                                               ; store Y position in a temp register
+    addi        #1,d1
+    jsr         collision_check_at_point                            ; call the function
+    move        d6,d1                                               ; restore Y position from temp register
+    btst        #0,d7
+    beq         .falseResult
+    ; true
+.trueResult:
+    move.w      #PLAYER_MOVEMENT_STATE_NORMAL,player.movement_state(a6) ; reset the movement state
+    move.w      #0,d3                                               ; reset subpixels
+    move.w      #0,d5                                               ; reset velocity
+    ; false
+.falseResult:
+    rts
+
+; to be called only from the process movement function
+apply_velocities:
 .checkXVelocity:
     ; check if velocity isn't zero
     tst         d4
@@ -218,7 +276,7 @@ process_player_movement:
     ; check if velocity isn't zero                                  
     tst         d5
     bne         .applyYVelocity                                     ; if the test value came back with Z flag set
-    bra         .boundsCheck                                        ; just skip as there's no velocity to apply
+    bra         .endOfFunc                                        ; just skip as there's no velocity to apply
 .applyYVelocity:
     ; YVelocity is a TODO:
     ; check the current velocity for positive or negative
@@ -231,28 +289,31 @@ process_player_movement:
     ; if subpixel > PLAYER_SUB PIXEL_PER_PIXEL then adjust the full count
     cmpi.w      #PLAYER_SUBPIXEL_PER_PIXEL,d3
     bge         .spilloverYHigh
-    bra         .boundsCheck                                        ; otherwise we're done
+    bra         .endOfFunc                                        ; otherwise we're done
 .YNegative: 
     add.w       d5,d3
-    cmpi.w      #0,d2
+    cmpi.w      #0,d3
     blt         .spilloverYLow
-    bra         .boundsCheck
+    bra         .endOfFunc
 .spilloverYHigh:
     ; run the loop to add pixels until subpixel's back below threshold
     addq        #1,d1                                               ; increment full pixel count
     subi        #PLAYER_SUBPIXEL_PER_PIXEL,d3                       ; reduce subpixel count by a full pixel
     cmpi.w      #PLAYER_SUBPIXEL_PER_PIXEL,d3                       ; check if there's more pixels to process
     bge         .spilloverYHigh                                     ; loop
-    bra         .boundsCheck                                        ; otherwise we're done
+    bra         .endOfFunc                                        ; otherwise we're done
 .spilloverYLow:
     ; run the loop to remove pixels until subpixel's back below threshold
     subq        #1,d1
-    addi        #PLAYER_SUBPIXEL_PER_PIXEL,d2
+    addi        #PLAYER_SUBPIXEL_PER_PIXEL,d3
     cmpi.w      #0,d3
     blt         .spilloverYLow
-    bra         .boundsCheck
+    bra         .endOfFunc
+.endOfFunc
+    rts
 
-.boundsCheck:
+; to be called only from the process movement function
+bounds_check:
     cmpi        #PLAYER_BOUNDARY_MAX_X,d0
     bge         .boundsHighX
     cmpi        #PLAYER_BOUNDARY_MIN_X,d0
@@ -283,16 +344,6 @@ process_player_movement:
     move.w      #0,d3
     move.w      #0,d5
 .boundsCheckOver
-
-.EndOfFunc:
-    ; apply all the updates
-    move.w      d0,player.x(a6)                                     ; move the final stats back into memory
-    move.w      d1,player.y(a6)
-    move.w      d2,player.subpixel_x(a6)
-    move.w      d3,player.subpixel_y(a6)
-    move.w      d4,player.velocity_x(a6)
-    move.w      d5,player.velocity_y(a6)
-    movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
     rts
 
 ; moves the player according to the directions of the joystick
@@ -311,12 +362,12 @@ move_player_with_joystick:
     move.w      joystick.up(a4),d6
     btst        #0,d6
     beq         .no_up
-    sub.w       #1,d1
+    bsr         player_jump
 .no_up:
     move.w      joystick.down(a4),d6
     btst        #0,d6
     beq         .no_down
-    add.w       #1,d1
+    ;add.w       #1,d1
 .no_down:
     ;move.w      joystick.left(a4),d6
     ;btst        #0,d6
@@ -335,6 +386,22 @@ move_player_with_joystick:
     ;bsr         set_player_position
     
     movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
+    rts
+
+; should be called by move_player_with_joystick
+; makes the player jump when the button is pressed
+; checks for valid states before doing so
+; @params: a4 - address of the joystick instance to check
+; @params: a6 - address of the player instance to update
+player_jump:
+    ; check if player is airborne
+    cmp         #PLAYER_MOVEMENT_STATE_AIRBORNE,player.movement_state(a6)
+    beq         .SkipJump
+    ; if not, add a large negative velocity
+    move.w      #PLAYER_JUMP_VELOCITY_INIT,d5
+    ; and set state to airborne
+    move.w      #PLAYER_MOVEMENT_STATE_AIRBORNE,player.movement_state(a6)
+.SkipJump:
     rts
 
 ; should be called by move_player_with_joystick

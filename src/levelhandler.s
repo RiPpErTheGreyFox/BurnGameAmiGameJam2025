@@ -83,3 +83,25 @@ fill_screen_with_tiles:
 
     movem.l    (sp)+,d0-a6
     rts
+
+; check for collision at point, basic version just returns a lower plane
+; doesn't preserve registers
+; @params: d0.w - X Position to check
+; @params: d1.w - Y position to check
+; @params: d4.w - X Velocity
+; @params: d5.w - Y Velocity
+; @returns: d7 - 1 if true
+collision_check_at_point:
+    ; TODO: use a lookup table for collidable tile types
+    ; TODO: handle scrolling of the map
+    ; for now just return true if position Y is at a certain point
+    ; compare Y position if it's above 300, return true
+    cmpi       #142,d1
+    bgt        .returntrue
+
+.returnfalse:
+    move.w     #0,d7
+    rts
+.returntrue:
+    move.w     #1,d7
+    rts
