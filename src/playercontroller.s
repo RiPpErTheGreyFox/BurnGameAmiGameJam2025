@@ -3,6 +3,8 @@
               INCLUDE     "hw.i"
 ;---------- Constants ---------
 ACTOR_SUBPIXEL_PER_PIXEL        equ 16                      ; how many subpixels are in each pixel
+ACTOR_GRAVITY_NORMAL            equ 5                       ; in sp/f
+ACTOR_GRAVITY_SLOW              equ 1                       ; in sp/f
 
 PLAYER_WIDTH                    equ 32                      ; width in pixels
 PLAYER_WIDTH_B                  equ (PLAYER_WIDTH/8)        ; width in bytes
@@ -13,7 +15,8 @@ PLAYER_MAXVELOCITY_X            equ 32                      ; default max speed 
 PLAYER_MAXVELOCITY_Y            equ 32
 PLAYER_ACCELERATION             equ 1                       ; in subpixels per frame
 PLAYER_DECELERATION             equ 1
-PLAYER_JUMP_VELOCITY_INIT       equ -32                     ; initial velocity to apply to character when jumping
+PLAYER_JUMP_VELOCITY_INIT       equ -64                     ; initial velocity to apply to character when jumping
+PLAYER_JUMP_DECELERATE_TIME     equ 24                      ; amount of frames that jump button can be held to limit the deceleration
 PLAYER_BOUNDARY_MIN_X           equ 16
 PLAYER_BOUNDARY_MAX_X           equ (0+DISPLAY_WIDTH-PLAYER_WIDTH)               
 PLAYER_BOUNDARY_MIN_Y           equ 0
@@ -68,9 +71,11 @@ actor.anim_timer        rs.w        1                       ; timer for the anim
 actor.inv_timer         rs.w        1                       ; timer for invulnerable state
 actor.flash_timer       rs.w        1                       ; timer for flashing
 actor.visible           rs.w        1                       ; visibility flag: 1 visible, 0 not
+actor.jump_decel_timer  rs.w        1                       ; timer variable to track jump deceleration
 actor.fire_timer        rs.w        1                       ; timer to implement a delay between subsequent shots
 actor.fire_delay        rs.w        1                       ; delay between two shots (in frames)
 actor.fire_type         rs.w        1                       ; type of fire
+actor.controller_addr   rs.l        1                       ; point of the attached controller for this actor, if one exists
 actor.length            rs.b        0
 
 ;----------- Variables --------
@@ -90,9 +95,10 @@ pl_instance1            dc.w    PLAYER_STARTING_POSX,0,PLAYER_STARTING_POSY,0;
                         dc.w    PLAYER_INV_STATE_DURATION                   ;
                         dc.w    PLAYER_FLASH_DURATION                       ;
                         dc.w    1                                           ;
-                        dc.w    0                                           ;
+                        dc.w    0,0                                         ;
                         dc.w    BASE_FIRE_INTERVAL                          ;
                         dc.w    BULLET_TYPE_BASE                            ;
+                        dc.l    joystick1_instance                          ;
 
                         ; player instance
 pl_instance2            dc.w    64,0,PLAYER_STARTING_POSY,0                 ;
@@ -110,9 +116,10 @@ pl_instance2            dc.w    64,0,PLAYER_STARTING_POSY,0                 ;
                         dc.w    PLAYER_INV_STATE_DURATION                   ;
                         dc.w    PLAYER_FLASH_DURATION                       ;
                         dc.w    1                                           ;
-                        dc.w    0                                           ;
+                        dc.w    0,0                                         ;
                         dc.w    BASE_FIRE_INTERVAL                          ;
                         dc.w    BULLET_TYPE_BASE                            ;
+                        dc.l    joystick2_instance                          ;
 
 ;---------- Subroutines -------
     SECTION CODE
@@ -204,10 +211,30 @@ process_actor_movement:
     movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
     rts
 
+; @params: a6 - address of the current actor instance to update
 update_jump_velocity:
+    ; first to see if the timer is set, if the timer isn't set, then we haven't jumped
+    cmpi        #0,actor.jump_decel_timer(a6)
+    ble         .applyNormalGravity                                 ; skip if there's no slow timer left
+    ; there's a timer set, so decrement it
+    subi        #1,actor.jump_decel_timer(a6)
+    ; check if we have a controller attached
+    cmpi        #0,actor.controller_addr(a6)
+    beq         .applyNormalGravity                                 ; skip if we can't find a controller
+    ; otherwise grab it from the actor
+    move.l      actor.controller_addr(a6),a4
+    move.w      joystick.up(a4),d6
+    btst        #0,d6
+    bne         .applySlowGravity
+    bra         .applyNormalGravity
     ; TODO: make it so that holding down the button reduces falling speed
+.applySlowGravity:
+    addi        #ACTOR_GRAVITY_SLOW,d5
+    bra         .endGravity
+.applyNormalGravity:
     ; decelerate down to the maximum negative speed
-    addi        #1,d5
+    addi        #ACTOR_GRAVITY_NORMAL,d5
+.endGravity: 
     ; do a max velocity test
     cmp         #PLAYER_MAXVELOCITY_Y,d5
     bgt         .clampYVelocity
@@ -405,6 +432,8 @@ player_jump:
     move.w      #PLAYER_JUMP_VELOCITY_INIT,d5
     ; and set state to airborne
     move.w      #PLAYER_MOVEMENT_STATE_AIRBORNE,actor.movement_state(a6)
+    ; set the jump decel timer
+    move.w      #PLAYER_JUMP_DECELERATE_TIME,actor.jump_decel_timer(a6)
 .SkipJump:
     rts
 

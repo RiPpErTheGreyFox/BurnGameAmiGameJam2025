@@ -52,9 +52,10 @@ enemy_instance1         dc.w    ENEMY_STARTING_POSX,0,ENEMY_STARTING_POSY,0 ;
                         dc.w    ENEMY_INV_STATE_DURATION                    ;
                         dc.w    ENEMY_FLASH_DURATION                        ;
                         dc.w    1                                           ;
-                        dc.w    0                                           ;
+                        dc.w    0,0                                         ;
                         dc.w    BASE_FIRE_INTERVAL                          ;
                         dc.w    BULLET_TYPE_BASE                            ;
+                        dc.l    0                                           ;
 
 ;---------- Subroutines -------
     SECTION CODE
