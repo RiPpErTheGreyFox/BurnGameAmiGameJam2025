@@ -263,56 +263,76 @@ wait_vline:
     cmp.l       d2,d0
     bne.s       .wait
 
-    movem.l     (sp)+,d0-a6                 ; restore registers onto the stack
+    movem.l     (sp)+,d0-a6                                         ; restore registers onto the stack
     rts
 
 ; waits for the vertical blank
 wait_vblank:
-    movem.l     d0-a6,-(sp)                 ; copy registers onto the stack
+    movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
     move.l      #236,d2
     bsr         wait_vline
-    movem.l     (sp)+,d0-a6                 ; restore registers onto the stack
+    movem.l     (sp)+,d0-a6                                         ; restore registers onto the stack
     rts
 
-; scrolls the background to the left
-scroll_background:
-    movem.l    d0-a6,-(sp)
+; draws and scrolls the background to the right if either of the players are past the scroll threshold
+update_background:
+    movem.l     d0-a6,-(sp)
 
-    move.w     bgnd_x,d0                                                ; x position of the part of background to draw
-    move.l     draw_buffer,a1                                           ; buffer where to draw                                                  
-    bsr        draw_background
+    move.w      bgnd_x,d0                                            ; x position of the part of background to draw
+    move.l      draw_buffer,a1                                       ; buffer where to draw                                                  
+    bsr         draw_background
+    ; drawing the background before the scroll check makes it a frame behind
 
-    ext.l      d0                                                       ; every 16 pixels draws a new column
-    divu       #16,d0
-    swap       d0
-    tst.w      d0                                                       ; remainder of bgnd_x/16 is zero?
-    beq        .draw_new_column
-    bra        .check_bgnd_end
+.scroll_check:
+    ; check if either player is near the edge, if so scroll screen
+    lea         pl_instance1,a6                                     ; grab each player instance and store their data
+    cmpi.w      #SCROLL_THRESHOLD_X_RIGHT,actor.x(a6)               ; compared them to the screen scroll threshold
+    bge         .scroll_screen                                      ; if past the threshold, then branch to scroll
+    lea         pl_instance2,a6
+    cmpi.w      #SCROLL_THRESHOLD_X_RIGHT,actor.x(a6)
+    bge         .scroll_screen
+    bra         .return                                ; otherwise skip scrolling
+.scroll_screen:
+    ; call the screen_scrolled functions on all actors to make sure they shift correctly, just report how the "camera" moved
+    move.w      #SCROLL_SPEED,d0
+    move.w      0,d1
+    bsr         player_screen_scrolled
+    bsr         enemy_screen_scrolled
+.end_of_scroll_check:
+
+    move.w      bgnd_x,d0                                            ; x position of the part of background to draw
+    ext.l       d0                                                   ; every 16 pixels draws a new column
+    divu        #16,d0
+    swap        d0
+    tst.w       d0                                                   ; remainder of bgnd_x/16 is zero?
+    beq         .draw_new_column
+    bra         .check_bgnd_end
 .draw_new_column:
-    add.w      #16,camera_x
-    add.w      #1,map_ptr
-    cmp.w      #269,map_ptr                                             ; end of map?
-    bge        .return
+    add.w       #SCROLL_SPEED*16,camera_x
+    add.w       #1,map_ptr
+    cmp.w       #268,map_ptr                                         ; end of map?
+    bge         .return
 
-    move.w     map_ptr,d0                                               ; map column
-    move.w     bgnd_x,d2                                                ; x position = bgnd_x - 16
-    sub.w      #16,d2
-    lea        bgnd_surface,a1
-    bsr        draw_tile_column                                         ; draws the column to the left of the viewport
+    move.w      map_ptr,d0                                           ; map column
+    move.w      bgnd_x,d2                                            ; x position = bgnd_x - 16
+    sub.w       #16,d2
+    lea         bgnd_surface,a1
+    bsr         draw_tile_column                                     ; draws the column to the left of the viewport
 
-    move.w     bgnd_x,d2                                                ; x position = bgnd_x + VIEWPORT_WIDTH
-    add.w      #VIEWPORT_WIDTH,d2 
-    lea        bgnd_surface,a1
-    bsr        draw_tile_column                                         ; draws the column to the right of the viewport
+    move.w      bgnd_x,d2                                            ; x position = bgnd_x + VIEWPORT_WIDTH
+    add.w       #VIEWPORT_WIDTH,d2 
+    lea         bgnd_surface,a1
+    bsr         draw_tile_column                                     ; draws the column to the right of the viewport
 .check_bgnd_end:
-    cmp.w      #16+VIEWPORT_WIDTH,bgnd_x                                ; end of background surface?
-    ble        .incr_x
-    move.w     #SCROLL_SPEED,bgnd_x                                     ; resets x position of the part of background to draw
-    bra        .return
-.incr_x       
-    add.w      #SCROLL_SPEED,bgnd_x                                     ; increases x position of the part of background to draw
-.return
-    movem.l    (sp)+,d0-a6
+    cmp.w       #16+VIEWPORT_WIDTH,bgnd_x                            ; end of background surface?
+    ble         .incr_x
+    move.w      #SCROLL_SPEED,bgnd_x                                 ; resets x position of the part of background to draw
+    bra         .return
+.incr_x         
+    add.w       #SCROLL_SPEED,bgnd_x                                 ; increases x position of the part of background to draw
+
+.return 
+    movem.l     (sp)+,d0-a6
     rts
 
 ; swaps video buffers, causing draw_buffer to be displayed

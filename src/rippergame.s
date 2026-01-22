@@ -16,7 +16,7 @@ main:
 mainloop:
     bsr         wait_vblank
     bsr         swap_buffers
-    bsr         scroll_background
+    bsr         update_background
 
     ; updated controllers
     bsr         joystick_update
@@ -26,10 +26,10 @@ mainloop:
     bsr         update_enemies
 
 ;    bsr         isConfirmPressed        ; is confirm pressed?
-    lea         joystick1_instance,a6
-    move.w      joystick.button1(a6),d0
-    btst        #0,d0
-    beq         mainloop
+;    lea         joystick1_instance,a6
+;    move.w      joystick.button1(a6),d0
+;    btst        #0,d0
+    bra         mainloop
 
     bsr         shutdown
     rts

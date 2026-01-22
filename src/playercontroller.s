@@ -9,11 +9,11 @@ PLAYER_WIDTH_B                  equ (PLAYER_WIDTH/8)        ; width in bytes
 PLAYER_HEIGHT                   equ 32                      ; height in pixels
 PLAYER_STARTING_POSX            equ 16                      ; starting position
 PLAYER_STARTING_POSY            equ 32
-PLAYER_MAXVELOCITY_X            equ 48                      ; default max speed in subpixel/frame
-PLAYER_MAXVELOCITY_Y            equ 48
+PLAYER_MAXVELOCITY_X            equ 32                      ; default max speed in subpixel/frame
+PLAYER_MAXVELOCITY_Y            equ 32
 PLAYER_ACCELERATION             equ 1                       ; in subpixels per frame
 PLAYER_DECELERATION             equ 1
-PLAYER_JUMP_VELOCITY_INIT       equ -30                     ; initial velocity to apply to character when jumping
+PLAYER_JUMP_VELOCITY_INIT       equ -32                     ; initial velocity to apply to character when jumping
 PLAYER_BOUNDARY_MIN_X           equ 16
 PLAYER_BOUNDARY_MAX_X           equ (0+DISPLAY_WIDTH-PLAYER_WIDTH)               
 PLAYER_BOUNDARY_MIN_Y           equ 0
@@ -494,4 +494,23 @@ updateAnimation:
     move.w      d1,actor.current_anim(a6)
     move.w      d6,actor.current_frame(a6)
     move.w      d7,actor.anim_timer(a6)
+    rts
+
+; function called whenever the worldspace screen is scrolled, used to anchor actors in the same plane
+; @params: d0.w - X amount of screen scrolled, before negation
+; @params: d1.w - Y amount of screen scrolled, before negation
+player_screen_scrolled:
+    movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
+    
+    neg         d0                                                  ; make the actor movement opposite of camera movement
+    neg         d1
+
+    lea         pl_instance1,a6
+    add.w       d0,actor.x(a6)
+    add.w       d1,actor.y(a6)
+
+    lea         pl_instance2,a6
+    add.w       d0,actor.x(a6)
+    add.w       d1,actor.y(a6)
+    movem.l     (sp)+,d0-a6                                         ; restore registers onto the stack
     rts
