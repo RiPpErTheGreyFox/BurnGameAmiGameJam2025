@@ -12,6 +12,7 @@ main:
     move.w      d0,map_ptr
     bsr         init_background
     move.w      #16,bgnd_x
+    bsr         PlayTestSound
 
 mainloop:
     bsr         wait_vblank
@@ -29,6 +30,8 @@ mainloop:
 ;    lea         joystick1_instance,a6
 ;    move.w      joystick.button1(a6),d0
 ;    btst        #0,d0
+
+    bsr         StopAllSounds
     bra         mainloop
 
     bsr         shutdown
@@ -50,3 +53,4 @@ shutdown:
     INCLUDE         "levelhandler.s"
     INCLUDE         "playercontroller.s"
     INCLUDE         "enemymanager.s"
+    INCLUDE         "soundmanager.s"
