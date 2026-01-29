@@ -31,23 +31,25 @@ enableallchannels:
 ; @param: d1 - bitmask of channels to play the sound on
 PlaySampleOnChannel:
     movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
-    ;TODO: Finish this
+    lea         CUSTOM,a5
+    move.l      a6,AUD0LC(a5)                                       ; assign address of sample to the audio channel
+    move.w      d0,AUD0LEN(a5)                                      ; assign length to the audio channel
+    move.w      #424,AUD0PER(a5)                                    ; set a neutral period (424 is good)
+    move.w      #64,AUD0VOL(a5)                                     ; set volume high
+    move.w      #%1000001000000001,DMACON(a5)                       ; trigger the channel to start it's DMA
+    bsr         EnableAudioChannel0Interrupt                        ; make sure the interrupt is set otherwise sound will loop forever
     movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
     rts
 
 PlayTestSound:
     movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
     lea         CUSTOM,a5
-    move.l      #SINE,AUD0LC(a5)
-    move.w      #(SINE_END-SINE)/2,AUD0LEN(a5)
-    move.w      #339,AUD0PER(a5)
-    move.w      #32,AUD0VOL(a5)
+    move.l      #TESTSAMPLE,AUD0LC(a5)
+    move.w      #TESTSAMPLE_LEN/2,AUD0LEN(a5)
+    move.w      #424,AUD0PER(a5)
+    move.w      #64,AUD0VOL(a5)
                  ;fedcba9876543210
     move.w      #%1000001000000001,DMACON(a5)
-
-.empty_sample:
-    move.l      #EMPTY_SAMPLE,AUD0LC(a5)
-    move.l      #(EMPTY_SAMPLE_LENGTH-EMPTY_SAMPLE)/2,AUD0LEN
 
     movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
     rts
@@ -76,10 +78,14 @@ SQUARE:
     DC.B        -100,-100,-100,-100,-100,-100,-100,-100,-100
 SQUARE_END
 
-EMPTY_SAMPLE:
-    dcb.w       1
-EMPTY_SAMPLE_LENGTH
+JUMPSOUND:
+    INCBIN      "assets/sounds/secretsample.sb"
+JUMPSOUND_LEN=*-JUMPSOUND
 
-RAZORMIND:
-    ;DC.B        
-RAZORMIND_END:
+TESTSAMPLE:
+    INCBIN      "assets/sounds/secretsample.sb"
+TESTSAMPLE_LEN=*-TESTSAMPLE
+
+EMPTY_SAMPLE:
+    dcb.b       20
+EMPTY_SAMPLE_LENGTH:

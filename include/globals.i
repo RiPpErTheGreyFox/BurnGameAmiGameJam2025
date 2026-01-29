@@ -4,8 +4,9 @@
 GLOBALS_I      SET	1
 
 ;---------- Constants ---------
-                            ;5432109876543210
+                                ;5432109876543210
 DMASET                      EQU %1000001111000000     ; enable only copper, bitplane and blitter DMA
+INTENABLEMASK               EQU %1100000010000000
 NUM_COLORS                  EQU 16
 N_PLANES                    EQU 4
 DISPLAY_WIDTH               EQU 320

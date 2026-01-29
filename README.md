@@ -31,13 +31,22 @@ Scene Manager - probably has crossover with game manager
 Start Screen Manager - handles attract mode and allows player number selection
 
 List a things to make the MVP possible:
-Character on screen
-Controller moving character
-Character being affected by gravity
-Enemy spawning/moving/collision with player
+*Character on screen
+*Controller moving character
+*Character being affected by gravity
+Enemy *spawning/ moving/ collision with player
 Projectile spawning/moving/collision with player
-background loading/drawing
-Sound playing
+/background loading/drawing
+*Sound playing
+
+MVP to-do final week of Jan:
+BIG BLOCK: Come up with level format (needs both graphics and scripts (scroll stops and enemy spawns))
+*Play the most basic sound to make sure the system works
+BIG BLOCK: Create a pool allocation for the enemies and projectiles to spawn and be managed
+make players shoot projectiles that kill enemies(need collision detection written)
+BIG BLOCK: make enemies touching players kill them (need collision detection written)
+add player death and respawning (needs state checking added to all updates and the like)
+
 
 Minimum viable product:
 Start screen with basic logo, firefighter moves onto nonscrolling unanimated background, enemies spawn at random intervals, firefighter can attack them, enemies move around at random and can attack randomly, PAL Amiga and possibly overspecced for testing, as long as player can die or clear X number of enemies, MVP is reached, basic sound effects are a bonus

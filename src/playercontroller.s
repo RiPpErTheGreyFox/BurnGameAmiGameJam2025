@@ -434,6 +434,13 @@ player_jump:
     move.w      #PLAYER_MOVEMENT_STATE_AIRBORNE,actor.movement_state(a6)
     ; set the jump decel timer
     move.w      #PLAYER_JUMP_DECELERATE_TIME,actor.jump_decel_timer(a6)
+    ; play the jump sound
+    movem.l     d0-a6,-(sp)
+    lea         JUMPSOUND,a6
+    move.w      #JUMPSOUND_LEN/2,d0
+    move.w      0,d1
+    bsr         PlaySampleOnChannel
+    movem.l     (sp)+,d0-a6
 .SkipJump:
     rts
 

@@ -12,7 +12,12 @@ main:
     move.w      d0,map_ptr
     bsr         init_background
     move.w      #16,bgnd_x
-    bsr         PlayTestSound
+
+    ; play the test sound to make sure these functions are working
+    lea         TESTSAMPLE,a6
+    move.w      #TESTSAMPLE_LEN/2,d0
+    move.w      0,d1
+    bsr         PlaySampleOnChannel
 
 mainloop:
     bsr         wait_vblank
@@ -31,7 +36,7 @@ mainloop:
 ;    move.w      joystick.button1(a6),d0
 ;    btst        #0,d0
 
-    bsr         StopAllSounds
+;    bsr         StopAllSounds
     bra         mainloop
 
     bsr         shutdown
