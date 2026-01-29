@@ -102,7 +102,7 @@ InterruptHandlerFunction:
     not.b       Audio
     bne.b       .cancel_interrupt
 
-    move.w      #$0001,DMACON(a5)                                   ; disable audio 0 dma
+    move.w      #$0003,DMACON(a5)                                   ; disable audio 0+1 dma
     move.w      #$0080,INTENA(a5)                                   ; disable interrupt
 .cancel_interrupt
     move.w      #$0080,INTREQ(a5)                                   ; clear interrupt request

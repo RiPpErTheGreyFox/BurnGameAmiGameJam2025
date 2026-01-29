@@ -373,8 +373,8 @@ palette         incbin "assets/gfx/testsprite.pal"
 player_gfx      incbin "assets/gfx/testsprite.raw"                      ; ship spritesheet 96x96, 3cols x 3rows, frame size: 32x32
 player_mask     incbin "assets/gfx/testsprite.mask"
 
-enemy_gfx       incbin "assets/gfx/testsprite.raw"
-enemy_mask      incbin "assets/gfx/testsprite.mask"
+enemy_gfx       incbin "assets/gfx/enemytestsprite.raw"
+enemy_mask      incbin "assets/gfx/enemytestsprite.mask"
 
     SECTION copper_segment,DATA_C
 

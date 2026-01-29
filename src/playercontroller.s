@@ -60,6 +60,7 @@ actor.bobdata           rs.l        1                       ; address of graphic
 actor.mask              rs.l        1                       ; address of graphics mask
 actor.current_frame     rs.w        1                       ; current animation frame
 actor.current_anim      rs.w        1                       ;
+actor.respectsBounds    rs.w        1                       ; a flag that determines if the current actor respects screen boundaries
 actor.width             rs.w        1                       ; width of the actor object
 actor.height            rs.w        1                       ; height of the object
 actor.spritesheetwidth  rs.w        1                       ; width of the spritesheet used as the graphic
@@ -86,6 +87,7 @@ pl_instance1            dc.w    PLAYER_STARTING_POSX,0,PLAYER_STARTING_POSY,0;
                         dc.l    player_mask                                 ;
                         dc.w    0                                           ;
                         dc.w    PLAYER_ANIM_IDLE                            ;
+                        dc.w    1                                           ;
                         dc.w    PLAYER_WIDTH,PLAYER_HEIGHT                  ;
                         dc.w    PLAYER_SPRITESHEET_WIDTH,PLAYER_SPRITESHEET_HEIGHT                                 ;
                         dc.w    PLAYER_STATE_ACTIVE                         ;
@@ -107,6 +109,7 @@ pl_instance2            dc.w    64,0,PLAYER_STARTING_POSY,0                 ;
                         dc.l    player_mask                                 ;
                         dc.w    0                                           ;
                         dc.w    PLAYER_ANIM_WALK                            ;
+                        dc.w    1                                           ;
                         dc.w    PLAYER_WIDTH,PLAYER_HEIGHT                  ;
                         dc.w    PLAYER_SPRITESHEET_WIDTH,PLAYER_SPRITESHEET_HEIGHT 
                         dc.w    PLAYER_STATE_ACTIVE                         ;
@@ -169,11 +172,11 @@ draw_actor:
     movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
     rts
 
-; hard sets the player position, resetting the subpixel count in the process
-; @params: d0 - new x position of player
-; @params: d1 - new y position of player
-; @params: a6 - address of the player instance to update
-set_player_position:
+; hard sets the actor position, resetting the subpixel count in the process
+; @params: d0 - new x position of actor
+; @params: d1 - new y position of actor
+; @params: a6 - address of the actor instance to update
+set_actor_position:
     movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
 
     move.w      d0,actor.x(a6)
@@ -196,9 +199,11 @@ process_actor_movement:
     move.w      actor.velocity_x(a6),d4                            ; d4 = velocity_x
     move.w      actor.velocity_y(a6),d5                            ; d5 = velocity_y
 
-    jsr         update_jump_velocity
-    jsr         apply_velocities
-    jsr         bounds_check
+    bsr         update_jump_velocity
+    bsr         apply_velocities
+    cmpi        #1,actor.respectsBounds(a6)
+    bne         .EndOfFunc
+    bsr         bounds_check
     
 .EndOfFunc:
     ; apply all the updates
@@ -406,15 +411,13 @@ move_player_with_joystick:
     ;sub.w       #1,d0
 .no_left:
     ; left and right handled by adjust X Velocity function
-    bsr         adjustXVelocity
+    bsr         adjustXVelocityPlayer
 .no_right:
 
 .end_joystick_check:
     ; save the velocities
     move.w      d4,actor.velocity_x(a6)
     move.w      d5,actor.velocity_y(a6)
-
-    ;bsr         set_player_position
     
     movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
     rts
@@ -447,7 +450,7 @@ player_jump:
 ; should be called by move_player_with_joystick
 ; @params: a4 - address of the joystick instance to update
 ; @params: a6 - address of the player instance to update
-adjustXVelocity:
+adjustXVelocityPlayer:
     move.w      actor.velocity_x(a6),d4                            ; d4 = velocity_x
 
     ; if increasing, then increase velocity, otherwise decay it

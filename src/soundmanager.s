@@ -36,7 +36,11 @@ PlaySampleOnChannel:
     move.w      d0,AUD0LEN(a5)                                      ; assign length to the audio channel
     move.w      #424,AUD0PER(a5)                                    ; set a neutral period (424 is good)
     move.w      #64,AUD0VOL(a5)                                     ; set volume high
-    move.w      #%1000001000000001,DMACON(a5)                       ; trigger the channel to start it's DMA
+    move.l      a6,AUD1LC(a5)                                       ; assign address of sample to the audio channel
+    move.w      d0,AUD1LEN(a5)                                      ; assign length to the audio channel
+    move.w      #424,AUD1PER(a5)                                    ; set a neutral period (424 is good)
+    move.w      #64,AUD1VOL(a5)                                     ; set volume high
+    move.w      #%1000001000000011,DMACON(a5)                       ; trigger the channel to start it's DMA
     bsr         EnableAudioChannel0Interrupt                        ; make sure the interrupt is set otherwise sound will loop forever
     movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
     rts
@@ -48,8 +52,12 @@ PlayTestSound:
     move.w      #TESTSAMPLE_LEN/2,AUD0LEN(a5)
     move.w      #424,AUD0PER(a5)
     move.w      #64,AUD0VOL(a5)
+    move.l      #TESTSAMPLE,AUD1LC(a5)
+    move.w      #TESTSAMPLE_LEN/2,AUD1LEN(a5)
+    move.w      #424,AUD1PER(a5)
+    move.w      #64,AUD1VOL(a5)
                  ;fedcba9876543210
-    move.w      #%1000001000000001,DMACON(a5)
+    move.w      #%1000001000000011,DMACON(a5)
 
     movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
     rts
