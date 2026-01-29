@@ -376,6 +376,9 @@ player_mask     incbin "assets/gfx/testsprite.mask"
 enemy_gfx       incbin "assets/gfx/enemytestsprite.raw"
 enemy_mask      incbin "assets/gfx/enemytestsprite.mask"
 
+projectile_gfx  incbin "assets/gfx/projectiletestsprite.raw"
+projectile_mask incbin "assets/gfx/projectiletestsprite.mask"
+
     SECTION copper_segment,DATA_C
 
 copperlist:

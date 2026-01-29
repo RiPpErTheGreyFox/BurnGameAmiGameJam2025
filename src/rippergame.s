@@ -28,16 +28,18 @@ mainloop:
     bsr         joystick_update
 
     ; run major updates
+    bsr         UpdateProjectileManager
     bsr         update_players
     bsr         update_enemies
 
 ;    bsr         isConfirmPressed        ; is confirm pressed?
-;    lea         joystick1_instance,a6
-;    move.w      joystick.button1(a6),d0
-;    btst        #0,d0
+    lea         joystick1_instance,a6
+    move.w      joystick.button1(a6),d0
+    btst        #0,d0
 
 ;    bsr         StopAllSounds
-    bra         mainloop
+    beq         mainloop
+    bsr         mainloop                ; DEBUG, don't quit the game when debugging
 
     bsr         shutdown
     rts
@@ -57,5 +59,6 @@ shutdown:
     INCLUDE         "systemroutines.s"
     INCLUDE         "levelhandler.s"
     INCLUDE         "playercontroller.s"
+    INCLUDE         "projectilemanager.s"
     INCLUDE         "enemymanager.s"
     INCLUDE         "soundmanager.s"
