@@ -32,9 +32,10 @@ PLAYER_FRAME_SIZE               equ (PLAYER_WIDTH_B*PLAYER_HEIGHT)
 PLAYER_MASK_SIZE                equ (PLAYER_WIDTH_B*PLAYER_HEIGHT)
 PLAYER_SPRITESHEET_WIDTH        equ 96
 PLAYER_SPRITESHEET_HEIGHT       equ 96
-PLAYER_STATE_ACTIVE             equ 0
-PLAYER_STATE_HIT                equ 1
-PLAYER_STATE_INVINCIBLE         equ 2
+ACTOR_STATE_ACTIVE              equ 0
+ACTOR_STATE_HIT                 equ 1
+ACTOR_STATE_INVINCIBLE          equ 2
+ACTOR_STATE_INACTIVE            equ 3
 
 ; player states:
 ; - active: accepts input, can collide with enemies
@@ -90,7 +91,7 @@ pl_instance1            dc.w    PLAYER_STARTING_POSX,0,PLAYER_STARTING_POSY,0;
                         dc.w    1                                           ;
                         dc.w    PLAYER_WIDTH,PLAYER_HEIGHT                  ;
                         dc.w    PLAYER_SPRITESHEET_WIDTH,PLAYER_SPRITESHEET_HEIGHT                                 ;
-                        dc.w    PLAYER_STATE_ACTIVE                         ;
+                        dc.w    ACTOR_STATE_INACTIVE                         ;
                         dc.w    PLAYER_MOVEMENT_STATE_NORMAL                ;
                         dc.w    PLAYER_MAX_ANIM_DELAY                       ;
                         dc.w    PLAYER_MAX_ANIM_DELAY                       ;
@@ -112,7 +113,7 @@ pl_instance2            dc.w    64,0,PLAYER_STARTING_POSY,0                 ;
                         dc.w    1                                           ;
                         dc.w    PLAYER_WIDTH,PLAYER_HEIGHT                  ;
                         dc.w    PLAYER_SPRITESHEET_WIDTH,PLAYER_SPRITESHEET_HEIGHT 
-                        dc.w    PLAYER_STATE_ACTIVE                         ;
+                        dc.w    ACTOR_STATE_INACTIVE                         ;
                         dc.w    PLAYER_MOVEMENT_STATE_NORMAL                ;
                         dc.w    PLAYER_MAX_ANIM_DELAY                       ;
                         dc.w    PLAYER_MAX_ANIM_DELAY                       ;

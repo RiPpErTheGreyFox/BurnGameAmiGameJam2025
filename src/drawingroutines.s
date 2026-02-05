@@ -297,7 +297,7 @@ update_background:
     move.w      #SCROLL_SPEED,d0
     move.w      0,d1
     bsr         player_screen_scrolled
-    bsr         enemy_screen_scrolled
+    bsr         EnemyScreenScrolled
 .end_of_scroll_check:
 
     move.w      bgnd_x,d0                                            ; x position of the part of background to draw

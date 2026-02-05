@@ -18,6 +18,28 @@ main:
     move.w      #TESTSAMPLE_LEN/2,d0
     move.w      0,d1
     bsr         PlaySampleOnChannel
+    bsr         EnemyManagerStart
+    bsr         ProjectileManagerStart
+
+    ; DEBUG: hard set all enemies to be active
+    lea         enemy_array,a6
+    move.w      #ACTOR_STATE_ACTIVE,actor.state(a6)
+    move.w      #254,actor.x(a6)
+    move.w      #1,actor.anim_timer(a6)
+    adda        #actor.length,a6
+    move.w      #ACTOR_STATE_ACTIVE,actor.state(a6)
+    move.w      #144,actor.x(a6)
+    move.w      #3,actor.anim_timer(a6)
+    adda        #actor.length,a6
+    move.w      #ACTOR_STATE_ACTIVE,actor.state(a6)
+    move.w      #220,actor.x(a6)
+    move.w      #6,actor.anim_timer(a6)
+    adda        #actor.length,a6
+    move.w      #ACTOR_STATE_ACTIVE,actor.state(a6)
+    move.w      #166,actor.x(a6)
+    move.w      #9,actor.anim_timer(a6)
+    adda        #actor.length,a6
+    move.w      #ACTOR_STATE_ACTIVE,actor.state(a6)
 
 mainloop:
     bsr         wait_vblank
@@ -30,7 +52,7 @@ mainloop:
     ; run major updates
     bsr         UpdateProjectileManager
     bsr         update_players
-    bsr         update_enemies
+    bsr         UpdateEnemies
 
 ;    bsr         isConfirmPressed        ; is confirm pressed?
     lea         joystick1_instance,a6

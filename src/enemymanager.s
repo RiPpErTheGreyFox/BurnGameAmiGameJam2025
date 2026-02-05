@@ -2,6 +2,8 @@
             INCDIR      "include"
             INCLUDE     "hw.i"
 ;---------- Constants ---------
+ENEMY_MAX_COUNT                 equ 5                       ; size of the pool of enemies
+
 ENEMY_WIDTH                     equ 32                       ; width in pixels
 ENEMY_WIDTH_B                   equ (ENEMY_WIDTH/8)          ; width in bytes
 ENEMY_HEIGHT                    equ 32                       ; height in pixels
@@ -24,9 +26,6 @@ ENEMY_FRAME_SIZE                equ (ENEMY_WIDTH_B*ENEMY_HEIGHT)
 ENEMY_MASK_SIZE                 equ (ENEMY_WIDTH_B*ENEMY_HEIGHT)
 ENEMY_SPRITESHEET_WIDTH         equ 96
 ENEMY_SPRITESHEET_HEIGHT        equ 96
-ENEMY_STATE_ACTIVE              equ 0
-ENEMY_STATE_HIT                 equ 1
-ENEMY_STATE_INVINCIBLE          equ 2
 ENEMY_MAX_ANIM_DELAY            equ 10                      ; delay between two animation frames (in frames)
 ENEMY_INV_STATE_DURATION       equ (50*5)                  ; duration of the invincible state (in frames)
 ENEMY_FLASH_DURATION           equ 3                       ; flashing duration (in frames)
@@ -34,55 +33,45 @@ ENEMY_FLASH_DURATION           equ 3                       ; flashing duration (
 
 ;----------- Variables --------
 ; enemy instances
-enemy_instance1         dc.w    ENEMY_STARTING_POSX,0,ENEMY_STARTING_POSY,0 ;
-                        dc.w    0,5                                         ;
-                        dc.l    enemy_gfx                                   ;
-                        dc.l    enemy_mask                                  ;
-                        dc.w    0                                           ;
-                        dc.w    ENEMY_ANIM_IDLE                             ;
-                        dc.w    0                                           ;
-                        dc.w    32,32                                       ;
-                        dc.w    96,96                                       ;
-                        dc.w    ENEMY_STATE_ACTIVE                          ;
-                        dc.w    ENEMY_MOVEMENT_STATE_NORMAL                 ;
-                        dc.w    ENEMY_MAX_ANIM_DELAY                        ;
-                        dc.w    ENEMY_MAX_ANIM_DELAY                        ;
-                        dc.w    ENEMY_INV_STATE_DURATION                    ;
-                        dc.w    ENEMY_FLASH_DURATION                        ;
-                        dc.w    1                                           ;
-                        dc.w    0,0                                         ;
-                        dc.w    BASE_FIRE_INTERVAL                          ;
-                        dc.w    BULLET_TYPE_BASE                            ;
-                        dc.l    0                                           ;
+enemy_array             dcb.b   actor.length
+                        dcb.b   actor.length
+                        dcb.b   actor.length
+                        dcb.b   actor.length
+                        dcb.b   actor.length
 
 ;---------- Subroutines -------
     SECTION CODE
 
-enemymanagerstart:
+EnemyManagerStart:
     ; declare and initialise the full enemy pool
+    bsr         InitialiseEnemyPool
     ; setup the spawning rules based on the level
     rts
 
-initialise_enemy_pool:
-    ; iterate through the array and set everything up
-    rts
-
-update_enemies:
+UpdateEnemies:
     movem.l     d0-a6,-(sp)
 
     ; iterate through the array and run the updates of them all
-    lea         enemy_instance1,a6
-    bsr         enemy_ai_process
+    lea         enemy_array,a6
+    move.w      #ENEMY_MAX_COUNT-1,d0                               ; off by one
+.loopStart:
+    cmpi        #ACTOR_STATE_INACTIVE,actor.state(a6)
+    beq         .loopEnd
+    bsr         ProcessEnemyAI
     bsr         process_actor_movement
     bsr         updateAnimation
     bsr         draw_actor
+.loopEnd:
+    adda        #actor.length,a6
+    dbra        d0,.loopStart                                       ; repeat number of times for every projectile
 
-    movem.l     (sp)+,d0-a6 
+    movem.l     (sp)+,d0-a6
     rts
 
 ; function which contains the enemies decision making
 ; very simple for, now, walk left and respawn when hitting wall
-enemy_ai_process:
+; @params: a6 - address of the actor instance to update
+ProcessEnemyAI:
     movem.l     d0-a6,-(sp)
     ; check if we've hit the left wall
     cmpi        #16,actor.x(a6)
@@ -97,15 +86,15 @@ enemy_ai_process:
     ; if so, respawn, otherwise keep going left
     ; using a variant of adjustXVelocity
     move.w      #-1,d0
-    bsr         adjustXVelocityEnemy
+    bsr         AdjustXVelocityEnemy
 
     movem.l     (sp)+,d0-a6 
     rts
 
 ; should be called by enemy_ai_process
 ; @params: d0 - -1 = moving left, 0 = no input, 1 = moving right
-; @params: a6 - address of the player instance to update
-adjustXVelocityEnemy:
+; @params: a6 - address of the actor instance to update
+AdjustXVelocityEnemy:
     move.w      actor.velocity_x(a6),d4                             ; d4 = velocity_x
 
     ; if increasing, then increase velocity, otherwise decay it
@@ -144,13 +133,64 @@ adjustXVelocityEnemy:
 ; function called whenever the worldspace screen is scrolled, used to anchor actors in the same plane
 ; @params: d0.w - X amount of screen scrolled, before negation
 ; @params: d1.w - Y amount of screen scrolled, before negation
-enemy_screen_scrolled:
+EnemyScreenScrolled:
     movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
     neg         d0                                                  ; make the actor movement opposite of camera movement
     neg         d1
-    ; TODO: make this work on the entire enemy array
-    lea         enemy_instance1,a6
+    move.w      #ENEMY_MAX_COUNT-1,d3
+    lea         enemy_array,a6
+.loopStart:
+    cmpi        #ACTOR_STATE_INACTIVE,actor.state(a6)
+    beq         .loopEnd
     add.w       d0,actor.x(a6)
     add.w       d1,actor.y(a6)
+.loopEnd:
+    adda        #actor.length,a6
+    dbra        d3,.loopStart
     movem.l     (sp)+,d0-a6                                         ; restore registers onto the stack
+    rts
+
+
+InitialiseEnemyPool:
+    ; iterate through the array and set everything up
+    lea         enemy_array,a6
+    move.w      #ENEMY_MAX_COUNT-1,d0                          ; off by one
+.loop:
+    bsr         InitialiseEnemy
+    adda        #actor.length,a6
+    dbra        d0,.loop
+    rts
+
+; bring all values back to sane and empty/default values
+; @params: a6 - address of the enemy to initialise
+; @return: a6 - end of the enemy array
+InitialiseEnemy:
+    move.w      #ENEMY_STARTING_POSX,actor.x(a6)                                       ;actor.x               
+    move.w      0,actor.subpixel_x(a6)                              ;actor.subpixel_x      
+    move.w      #ENEMY_STARTING_POSY,actor.y(a6)                                       ;actor.y               
+    move.w      0,actor.subpixel_y(a6)                              ;actor.subpixel_y      
+    move.w      0,actor.velocity_x(a6)                              ;actor.velocity_x      
+    move.w      0,actor.velocity_y(a6)                              ;actor.velocity_y      
+    move.l      #enemy_gfx,actor.bobdata(a6)                        ;actor.bobdata         
+    move.l      #enemy_mask,actor.mask(a6)                          ;actor.mask            
+    move.w      0,actor.current_frame(a6)                           ;actor.current_frame   
+    move.w      #ENEMY_ANIM_IDLE,actor.current_anim(a6)             ;actor.current_anim    
+    move.w      0,actor.respectsBounds(a6)                          ;actor.respectsBounds  
+    move.w      #ENEMY_WIDTH,actor.width(a6)                        ;actor.width           
+    move.w      #ENEMY_HEIGHT,actor.height(a6)                      ;actor.height          
+    move.w      #ENEMY_SPRITESHEET_WIDTH,actor.spritesheetwidth(a6) ;actor.spritesheetwidth
+    move.w      #ENEMY_SPRITESHEET_HEIGHT,actor.spritesheetheight(a6);actor.spritesheetheight
+    move.w      #ACTOR_STATE_INACTIVE,actor.state(a6)               ;actor.state           
+    move.w      #ENEMY_MOVEMENT_STATE_NORMAL,actor.movement_state(a6);actor.movement_state  
+    move.w      #ENEMY_MAX_ANIM_DELAY,actor.anim_delay(a6)          ;actor.anim_delay      
+    move.w      #ENEMY_MAX_ANIM_DELAY,actor.anim_timer(a6)          ;actor.anim_timer      
+    move.w      #ENEMY_INV_STATE_DURATION,actor.inv_timer(a6)       ;actor.inv_timer       
+    move.w      #ENEMY_FLASH_DURATION,actor.flash_timer(a6)         ;actor.flash_timer     
+    move.w      #1,actor.visible(a6)                                ;actor.visible         
+    move.w      0,actor.jump_decel_timer(a6)                        ;actor.jump_decel_timer
+    move.w      0,actor.fire_timer(a6)                              ;actor.fire_timer      
+    move.w      #BASE_FIRE_INTERVAL,actor.fire_delay(a6)            ;actor.fire_delay      
+    move.w      #BULLET_TYPE_BASE,actor.fire_type(a6)               ;actor.fire_type       
+    move.l      0,actor.controller_addr(a6)                         ;actor.controller_addr 
+
     rts
