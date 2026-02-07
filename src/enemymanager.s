@@ -27,8 +27,8 @@ ENEMY_MASK_SIZE                 equ (ENEMY_WIDTH_B*ENEMY_HEIGHT)
 ENEMY_SPRITESHEET_WIDTH         equ 96
 ENEMY_SPRITESHEET_HEIGHT        equ 96
 ENEMY_MAX_ANIM_DELAY            equ 10                      ; delay between two animation frames (in frames)
-ENEMY_INV_STATE_DURATION       equ (50*5)                  ; duration of the invincible state (in frames)
-ENEMY_FLASH_DURATION           equ 3                       ; flashing duration (in frames)
+ENEMY_INV_STATE_DURATION        equ (50*5)                  ; duration of the invincible state (in frames)
+ENEMY_FLASH_DURATION            equ 3                       ; flashing duration (in frames)
 ;-------- Data Structures -----
 
 ;----------- Variables --------
@@ -163,19 +163,18 @@ InitialiseEnemyPool:
 
 ; bring all values back to sane and empty/default values
 ; @params: a6 - address of the enemy to initialise
-; @return: a6 - end of the enemy array
 InitialiseEnemy:
     move.w      #ENEMY_STARTING_POSX,actor.x(a6)                                       ;actor.x               
-    move.w      0,actor.subpixel_x(a6)                              ;actor.subpixel_x      
+    move.w      #0,actor.subpixel_x(a6)                              ;actor.subpixel_x      
     move.w      #ENEMY_STARTING_POSY,actor.y(a6)                                       ;actor.y               
-    move.w      0,actor.subpixel_y(a6)                              ;actor.subpixel_y      
-    move.w      0,actor.velocity_x(a6)                              ;actor.velocity_x      
-    move.w      0,actor.velocity_y(a6)                              ;actor.velocity_y      
+    move.w      #0,actor.subpixel_y(a6)                              ;actor.subpixel_y      
+    move.w      #0,actor.velocity_x(a6)                              ;actor.velocity_x      
+    move.w      #0,actor.velocity_y(a6)                              ;actor.velocity_y      
     move.l      #enemy_gfx,actor.bobdata(a6)                        ;actor.bobdata         
     move.l      #enemy_mask,actor.mask(a6)                          ;actor.mask            
-    move.w      0,actor.current_frame(a6)                           ;actor.current_frame   
+    move.w      #0,actor.current_frame(a6)                           ;actor.current_frame   
     move.w      #ENEMY_ANIM_IDLE,actor.current_anim(a6)             ;actor.current_anim    
-    move.w      0,actor.respectsBounds(a6)                          ;actor.respectsBounds  
+    move.w      #0,actor.respectsBounds(a6)                          ;actor.respectsBounds  
     move.w      #ENEMY_WIDTH,actor.width(a6)                        ;actor.width           
     move.w      #ENEMY_HEIGHT,actor.height(a6)                      ;actor.height          
     move.w      #ENEMY_SPRITESHEET_WIDTH,actor.spritesheetwidth(a6) ;actor.spritesheetwidth
@@ -187,10 +186,61 @@ InitialiseEnemy:
     move.w      #ENEMY_INV_STATE_DURATION,actor.inv_timer(a6)       ;actor.inv_timer       
     move.w      #ENEMY_FLASH_DURATION,actor.flash_timer(a6)         ;actor.flash_timer     
     move.w      #1,actor.visible(a6)                                ;actor.visible         
-    move.w      0,actor.jump_decel_timer(a6)                        ;actor.jump_decel_timer
-    move.w      0,actor.fire_timer(a6)                              ;actor.fire_timer      
+    move.w      #0,actor.jump_decel_timer(a6)                        ;actor.jump_decel_timer
+    move.w      #0,actor.fire_timer(a6)                              ;actor.fire_timer      
     move.w      #BASE_FIRE_INTERVAL,actor.fire_delay(a6)            ;actor.fire_delay      
     move.w      #BULLET_TYPE_BASE,actor.fire_type(a6)               ;actor.fire_type       
-    move.l      0,actor.controller_addr(a6)                         ;actor.controller_addr 
+    move.l      #0,actor.controller_addr(a6)                         ;actor.controller_addr 
 
+    rts
+
+; iterates through the array and returns the first free instance
+; very useful for spawning
+; @returns: a6 - address of actor that's marked as inactive, returns 0 if none found
+; @clobbers: d7
+FindNextFreeEnemy:
+    lea         enemy_array,a6
+    move.w      #ENEMY_MAX_COUNT-1,d7                               ; off by one
+.loopStart:
+    cmpi        #ACTOR_STATE_INACTIVE,actor.state(a6)
+    beq         .actorFound
+    adda        #actor.length,a6
+    dbra        d7,.loopStart
+.actorNotfound:
+    move.l      #0,a6
+.actorFound:
+    rts
+
+; attempts to spawn an enemy with the desired location, will add more stuff later to it, AI needs updating
+; @params: d0.w - x position
+; @params: d1.w - y position
+; @returns: a6 - address of actor spawn, or 0.l if spawn failed
+SpawnEnemy:
+    bsr         FindNextFreeEnemy
+    move.l      a6,d2
+    cmpi        #0,d2
+    beq         .spawnFailed
+.spawnSuccess:
+    move.w      d0,actor.x(a6)                                      ;actor.x               
+    move.w      #0,actor.subpixel_x(a6)                              ;actor.subpixel_x      
+    move.w      d1,actor.y(a6)                                      ;actor.y               
+    move.w      #0,actor.subpixel_y(a6)                              ;actor.subpixel_y      
+    move.w      #0,actor.velocity_x(a6)                              ;actor.velocity_x      
+    move.w      #0,actor.velocity_y(a6)                              ;actor.velocity_y      
+    move.w      #0,actor.current_frame(a6)                           ;actor.current_frame   
+    move.w      #ENEMY_ANIM_IDLE,actor.current_anim(a6)             ;actor.current_anim
+    move.w      #ACTOR_STATE_ACTIVE,actor.state(a6)                 ;actor.state           
+    move.w      #ENEMY_MOVEMENT_STATE_NORMAL,actor.movement_state(a6);actor.movement_state   
+    move.w      #ENEMY_MAX_ANIM_DELAY,actor.anim_timer(a6)          ;actor.anim_timer     
+    move.w      #1,actor.visible(a6)                                ;actor.visible         
+    move.w      #0,actor.jump_decel_timer(a6)                        ;actor.jump_decel_timer
+    move.w      #0,actor.fire_timer(a6)                              ;actor.fire_timer      
+.spawnFailed:
+    rts
+
+; disables the enemy pointed to by the address
+; @params: a6 - address of actor to disable
+DespawnActor:
+    move.w      #ACTOR_STATE_INACTIVE,actor.state(a6)
+    move.w      #0,actor.visible(a6)
     rts

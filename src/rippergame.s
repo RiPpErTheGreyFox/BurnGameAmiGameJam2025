@@ -21,25 +21,20 @@ main:
     bsr         EnemyManagerStart
     bsr         ProjectileManagerStart
 
-    ; DEBUG: hard set all enemies to be active
-    lea         enemy_array,a6
-    move.w      #ACTOR_STATE_ACTIVE,actor.state(a6)
-    move.w      #254,actor.x(a6)
-    move.w      #1,actor.anim_timer(a6)
-    adda        #actor.length,a6
-    move.w      #ACTOR_STATE_ACTIVE,actor.state(a6)
-    move.w      #144,actor.x(a6)
-    move.w      #3,actor.anim_timer(a6)
-    adda        #actor.length,a6
-    move.w      #ACTOR_STATE_ACTIVE,actor.state(a6)
-    move.w      #220,actor.x(a6)
-    move.w      #6,actor.anim_timer(a6)
-    adda        #actor.length,a6
-    move.w      #ACTOR_STATE_ACTIVE,actor.state(a6)
-    move.w      #166,actor.x(a6)
-    move.w      #9,actor.anim_timer(a6)
-    adda        #actor.length,a6
-    move.w      #ACTOR_STATE_ACTIVE,actor.state(a6)
+    ; DEBUG: spawn some enemies
+    move.w      #254,d0
+    move.w      #ENEMY_STARTING_POSY,d1
+    bsr         SpawnEnemy
+    move.w      #310,d0
+    bsr         SpawnEnemy
+    move.w      #144,d0
+    bsr         SpawnEnemy
+    move.w      #220,d0
+    bsr         SpawnEnemy
+    move.w      #166,d0
+    bsr         SpawnEnemy
+    move.w      #69,d0
+    bsr         SpawnEnemy
 
 mainloop:
     bsr         wait_vblank

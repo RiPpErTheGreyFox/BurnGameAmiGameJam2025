@@ -103,6 +103,51 @@ InitialiseProjectile:
 
     rts
 
+
+; iterates through the array and returns the first free instance
+; very useful for spawning
+; @returns: a6 - address of actor that's marked as inactive, returns 0 if none found
+; @clobbers: d7
+FindNextFreeProjectile:
+    lea         projectile_array,a6
+    move.w      #PROJECTILE_MAX_COUNT-1,d7                               ; off by one
+.loopStart:
+    cmpi        #ACTOR_STATE_INACTIVE,actor.state(a6)
+    beq         .actorFound
+    adda        #actor.length,a6
+    dbra        d7,.loopStart
+.actorNotfound:
+    move.l      #0,a6
+.actorFound:
+    rts
+
 ; function for creating a projectile with a set type and initial position/velocity
+; @params: d0.w - x position
+; @params: d1.w - y position
+; @params: d2.w - x velocity
+; @params: d3.w - y velocity
+; @params: d4.w - projectile type
+; @returns: a6 - address of actor spawn, or 0.l if spawn failed
 SpawnProjectile:
+    bsr         FindNextFreeProjectile
+    move.l      a6,d2
+    cmpi        #0,d2
+    beq         .spawnFailed
+.spawnSuccess:
+    move.w      d0,actor.x(a6)                                      ;actor.x               
+    move.w      #0,actor.subpixel_x(a6)                              ;actor.subpixel_x      
+    move.w      d1,actor.y(a6)                                      ;actor.y               
+    move.w      #0,actor.subpixel_y(a6)                              ;actor.subpixel_y      
+    move.w      d2,actor.velocity_x(a6)                              ;actor.velocity_x      
+    move.w      d3,actor.velocity_y(a6)                              ;actor.velocity_y      
+    move.w      #0,actor.current_frame(a6)                           ;actor.current_frame   
+    move.w      #0,actor.current_anim(a6)             ;actor.current_anim
+    move.w      #ACTOR_STATE_ACTIVE,actor.state(a6)                 ;actor.state           
+    move.w      #ENEMY_MOVEMENT_STATE_NORMAL,actor.movement_state(a6);actor.movement_state   
+    move.w      #ENEMY_MAX_ANIM_DELAY,actor.anim_timer(a6)          ;actor.anim_timer     
+    move.w      #1,actor.visible(a6)                                ;actor.visible         
+    move.w      #0,actor.jump_decel_timer(a6)                        ;actor.jump_decel_timer
+    move.w      #0,actor.fire_timer(a6)                              ;actor.fire_timer
+    move.w      d4,actor.fire_type(a6)                               ;actor.fire_type       
+.spawnFailed:
     rts
