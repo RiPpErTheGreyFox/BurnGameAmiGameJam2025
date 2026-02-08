@@ -1,6 +1,6 @@
 ;---------- Includes ----------
-              INCDIR      "include"
-              INCLUDE     "hw.i"
+            INCDIR          "include"
+            INCLUDE         "hw.i"
 
     SECTION CODE
 
@@ -80,6 +80,35 @@ wait_ciab_ta:
     movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
     rts
 
+;-------- Random Number Functions --------
+
+; regenerates the prng long word filled with a random number
+GetRandomNumber:
+    movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
+    moveq       #4,d2
+    move.l      prng_number,d0
+Ninc0:
+    moveq       #0,d1
+    ror.l       #2,d0
+    bcc         Ninc1
+
+    addq.b      #1,d1
+Ninc1:
+    ror.l       #3,d0
+    bcc         Ninc2
+
+    addq.b      #1,d1
+Ninc2:
+    rol.l       #5,d0
+    roxr.b      #1,d1
+    roxr.l      #1,d0
+    dbra        d2,Ninc0
+
+    move.l      d0,prng_number
+
+    movem.l     (sp)+,d0-a6                                         ; restore registers onto the stack
+    rts
+
 ;---------- Interrupt Functions ----------
 
 ; TODO: expand this to allow any channel interrupt to be enabled
@@ -126,3 +155,4 @@ old_adkcon      dc.w    0                                           ; saved valu
 return_msg      dc.l    0                   
 wb_view         dc.l    0
 old_cop         dc.l    0
+prng_number     dc.l    $DEADBEEF

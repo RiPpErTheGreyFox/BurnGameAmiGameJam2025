@@ -214,6 +214,7 @@ FindNextFreeEnemy:
 ; attempts to spawn an enemy with the desired location, will add more stuff later to it, AI needs updating
 ; @params: d0.w - x position
 ; @params: d1.w - y position
+; @clobbers: d2.l
 ; @returns: a6 - address of actor spawn, or 0.l if spawn failed
 SpawnEnemy:
     bsr         FindNextFreeEnemy
@@ -221,20 +222,28 @@ SpawnEnemy:
     cmpi        #0,d2
     beq         .spawnFailed
 .spawnSuccess:
-    move.w      d0,actor.x(a6)                                      ;actor.x               
-    move.w      #0,actor.subpixel_x(a6)                              ;actor.subpixel_x      
-    move.w      d1,actor.y(a6)                                      ;actor.y               
-    move.w      #0,actor.subpixel_y(a6)                              ;actor.subpixel_y      
-    move.w      #0,actor.velocity_x(a6)                              ;actor.velocity_x      
-    move.w      #0,actor.velocity_y(a6)                              ;actor.velocity_y      
-    move.w      #0,actor.current_frame(a6)                           ;actor.current_frame   
-    move.w      #ENEMY_ANIM_IDLE,actor.current_anim(a6)             ;actor.current_anim
-    move.w      #ACTOR_STATE_ACTIVE,actor.state(a6)                 ;actor.state           
-    move.w      #ENEMY_MOVEMENT_STATE_NORMAL,actor.movement_state(a6);actor.movement_state   
-    move.w      #ENEMY_MAX_ANIM_DELAY,actor.anim_timer(a6)          ;actor.anim_timer     
-    move.w      #1,actor.visible(a6)                                ;actor.visible         
-    move.w      #0,actor.jump_decel_timer(a6)                        ;actor.jump_decel_timer
-    move.w      #0,actor.fire_timer(a6)                              ;actor.fire_timer      
+    move.w      d0,actor.x(a6)                                          ;actor.x               
+    move.w      #0,actor.subpixel_x(a6)                                 ;actor.subpixel_x      
+    move.w      d1,actor.y(a6)                                          ;actor.y               
+    move.w      #0,actor.subpixel_y(a6)                                 ;actor.subpixel_y      
+    move.w      #0,actor.velocity_x(a6)                                 ;actor.velocity_x      
+    move.w      #0,actor.velocity_y(a6)                                 ;actor.velocity_y
+    bsr         GetRandomNumber
+    move.b      prng_number,d2
+    andi.w      #%1,d2                                                  ;random number between 0 and 1
+    move.w      d2,actor.current_frame(a6)                              ;actor.current_frame   
+    move.w      #ENEMY_ANIM_IDLE,actor.current_anim(a6)                 ;actor.current_anim
+    move.w      #ACTOR_STATE_ACTIVE,actor.state(a6)                     ;actor.state           
+    move.w      #ENEMY_MOVEMENT_STATE_NORMAL,actor.movement_state(a6)   ;actor.movement_state
+    ; get a random number for the frame timer
+    bsr         GetRandomNumber
+    move.b      prng_number,d2
+    andi.w      #%111,d2                                                ;random number between 1 and 8
+    addq.b      #1,d2  
+    move.w      d2,actor.anim_timer(a6)                                 ;actor.anim_timer     
+    move.w      #1,actor.visible(a6)                                    ;actor.visible         
+    move.w      #0,actor.jump_decel_timer(a6)                           ;actor.jump_decel_timer
+    move.w      #0,actor.fire_timer(a6)                                 ;actor.fire_timer      
 .spawnFailed:
     rts
 
