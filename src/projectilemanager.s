@@ -32,27 +32,30 @@ ProjectileManagerStart:
     rts
 
 UpdateProjectileManager:
+    movem.l     d0-a6,-(sp)
     ; iterate through every projectile being managed
     ; update any that require it
+    lea         projectile_array,a6
+    move.w      #PROJECTILE_MAX_COUNT-1,d0
+.loopStart:
+    cmp         #ACTOR_STATE_INACTIVE,actor.state(a6)
+    beq         .loopEnd
+    bsr         UpdateProjectile
+.loopEnd:
+    adda        #actor.length,a6
+    dbra        d0,.loopStart
 
-    ; test draw a projectile to show that the manager is running
-    move.l      #projectile_gfx,a0
-    move.l      #projectile_mask,a1
-    move.l      draw_buffer,a2
-    move.w      #32,d0
-    move.w      #32,d1
-    move.w      #16,d2
-    move.w      #16,d3
-    move.w      #0,d4
-    move.w      #0,d5
-    move.w      #16,a3
-    move.w      #16,a4
-
-    bsr         draw_bob
-
+    movem.l     (sp)+,d0-a6
     rts
 
+; runs all logic for the projectile actors
+; @params: a6 - address of the projectile to be updated
 UpdateProjectile:
+    bsr         process_actor_movement
+    bsr         draw_actor
+    ; TODO: remove this and make projectiles detect properly
+    cmpi        #300,actor.x(a6)
+    bge         DespawnActor
     rts
 
 CollisionProjectileCheck:
@@ -73,36 +76,36 @@ InitialiseProjectilePool:
 ; @params: a6 - address of the projectile to initialise
 ; @return: a6 - end of the projectile array
 InitialiseProjectile:
-    move.w      0,actor.x(a6)                                       ;actor.x               
-    move.w      0,actor.subpixel_x(a6)                              ;actor.subpixel_x      
-    move.w      0,actor.y(a6)                                       ;actor.y               
-    move.w      0,actor.subpixel_y(a6)                              ;actor.subpixel_y      
-    move.w      0,actor.velocity_x(a6)                              ;actor.velocity_x      
-    move.w      0,actor.velocity_y(a6)                              ;actor.velocity_y      
+    move.w      #0,actor.x(a6)                                      ;actor.x               
+    move.w      #0,actor.subpixel_x(a6)                             ;actor.subpixel_x      
+    move.w      #0,actor.y(a6)                                      ;actor.y               
+    move.w      #0,actor.subpixel_y(a6)                             ;actor.subpixel_y      
+    move.w      #0,actor.velocity_x(a6)                             ;actor.velocity_x      
+    move.w      #0,actor.velocity_y(a6)                             ;actor.velocity_y      
     move.l      #projectile_gfx,actor.bobdata(a6)                   ;actor.bobdata         
     move.l      #projectile_mask,actor.mask(a6)                     ;actor.mask            
-    move.w      0,actor.current_frame(a6)                           ;actor.current_frame   
-    move.w      0,actor.current_anim(a6)                            ;actor.current_anim    
-    move.w      0,actor.respectsBounds(a6)                          ;actor.respectsBounds  
+    move.w      #0,actor.current_frame(a6)                          ;actor.current_frame   
+    move.w      #0,actor.current_anim(a6)                           ;actor.current_anim    
+    move.w      #1,actor.respectsBounds(a6)                         ;actor.respectsBounds  
     move.w      #PROJECTILE_WIDTH,actor.width(a6)                   ;actor.width           
     move.w      #PROJECTILE_HEIGHT,actor.height(a6)                 ;actor.height          
     move.w      #PROJECTILE_SPRITESHEET_W,actor.spritesheetwidth(a6);actor.spritesheetwidth
     move.w      #PROJECTILE_SPRITESHEET_H,actor.spritesheetheight(a6);actor.spritesheetheight
     move.w      #ACTOR_STATE_INACTIVE,actor.state(a6)               ;actor.state           
-    move.w      0,actor.movement_state(a6)                          ;actor.movement_state  
-    move.w      0,actor.anim_delay(a6)                              ;actor.anim_delay      
-    move.w      0,actor.anim_timer(a6)                              ;actor.anim_timer      
-    move.w      0,actor.inv_timer(a6)                               ;actor.inv_timer       
-    move.w      0,actor.flash_timer(a6)                             ;actor.flash_timer     
-    move.w      0,actor.visible(a6)                                 ;actor.visible         
-    move.w      0,actor.jump_decel_timer(a6)                        ;actor.jump_decel_timer
-    move.w      0,actor.fire_timer(a6)                              ;actor.fire_timer      
-    move.w      0,actor.fire_delay(a6)                              ;actor.fire_delay      
-    move.w      0,actor.fire_type(a6)                               ;actor.fire_type       
-    move.l      0,actor.controller_addr(a6)                         ;actor.controller_addr 
+    move.w      #0,actor.movement_state(a6)                         ;actor.movement_state  
+    move.w      #0,actor.anim_delay(a6)                             ;actor.anim_delay      
+    move.w      #0,actor.anim_timer(a6)                             ;actor.anim_timer      
+    move.w      #0,actor.inv_timer(a6)                              ;actor.inv_timer       
+    move.w      #0,actor.flash_timer(a6)                            ;actor.flash_timer     
+    move.w      #0,actor.visible(a6)                                ;actor.visible
+    move.w      #0,actor.gravity(a6)                                ;actor.gravity         
+    move.w      #0,actor.jump_decel_timer(a6)                       ;actor.jump_decel_timer
+    move.w      #0,actor.fire_timer(a6)                             ;actor.fire_timer      
+    move.w      #0,actor.fire_delay(a6)                             ;actor.fire_delay      
+    move.w      #0,actor.fire_type(a6)                              ;actor.fire_type       
+    move.l      #0,actor.controller_addr(a6)                        ;actor.controller_addr 
 
     rts
-
 
 ; iterates through the array and returns the first free instance
 ; very useful for spawning
@@ -130,8 +133,8 @@ FindNextFreeProjectile:
 ; @returns: a6 - address of actor spawn, or 0.l if spawn failed
 SpawnProjectile:
     bsr         FindNextFreeProjectile
-    move.l      a6,d2
-    cmpi        #0,d2
+    move.l      a6,d7
+    cmpi        #0,d7
     beq         .spawnFailed
 .spawnSuccess:
     move.w      d0,actor.x(a6)                                      ;actor.x               

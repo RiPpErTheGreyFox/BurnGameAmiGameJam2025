@@ -17,10 +17,10 @@ PLAYER_ACCELERATION             equ 1                       ; in subpixels per f
 PLAYER_DECELERATION             equ 1
 PLAYER_JUMP_VELOCITY_INIT       equ -64                     ; initial velocity to apply to character when jumping
 PLAYER_JUMP_DECELERATE_TIME     equ 24                      ; amount of frames that jump button can be held to limit the deceleration
-PLAYER_BOUNDARY_MIN_X           equ 16
-PLAYER_BOUNDARY_MAX_X           equ (0+DISPLAY_WIDTH-PLAYER_WIDTH)               
-PLAYER_BOUNDARY_MIN_Y           equ 0
-PLAYER_BOUNDARY_MAX_Y           equ (VIEWPORT_HEIGHT-PLAYER_HEIGHT)
+SCREEN_BOUNDARY_MIN_X           equ 0
+SCREEN_BOUNDARY_MAX_X           equ (0+DISPLAY_WIDTH)               
+SCREEN_BOUNDARY_MIN_Y           equ 0
+SCREEN_BOUNDARY_MAX_Y           equ (VIEWPORT_HEIGHT)
 PLAYER_MOVEMENT_STATE_NORMAL    equ 0
 PLAYER_MOVEMENT_STATE_AIRBORNE  equ 1
 PLAYER_ANIM_IDLE                equ 1
@@ -36,6 +36,9 @@ ACTOR_STATE_ACTIVE              equ 0
 ACTOR_STATE_HIT                 equ 1
 ACTOR_STATE_INVINCIBLE          equ 2
 ACTOR_STATE_INACTIVE            equ 3
+ACTOR_TYPE_PLAYER               equ 0
+ACTOR_TYPE_ENEMY                equ 1
+ACTOR_TYPE_PROJECTILE           equ 2
 
 ; player states:
 ; - active: accepts input, can collide with enemies
@@ -73,6 +76,8 @@ actor.anim_timer        rs.w        1                       ; timer for the anim
 actor.inv_timer         rs.w        1                       ; timer for invulnerable state
 actor.flash_timer       rs.w        1                       ; timer for flashing
 actor.visible           rs.w        1                       ; visibility flag: 1 visible, 0 not
+actor.gravity           rs.w        1                       ; gravity flag: 1 is affected by gravity, 0 is not
+actor.type              rs.w        1                       ; used for checking actor types in universal functions
 actor.jump_decel_timer  rs.w        1                       ; timer variable to track jump deceleration
 actor.fire_timer        rs.w        1                       ; timer to implement a delay between subsequent shots
 actor.fire_delay        rs.w        1                       ; delay between two shots (in frames)
@@ -97,7 +102,8 @@ pl_instance1            dc.w    PLAYER_STARTING_POSX,0,PLAYER_STARTING_POSY,0;
                         dc.w    PLAYER_MAX_ANIM_DELAY                       ;
                         dc.w    PLAYER_INV_STATE_DURATION                   ;
                         dc.w    PLAYER_FLASH_DURATION                       ;
-                        dc.w    1                                           ;
+                        dc.w    1,1                                         ;
+                        dc.w    ACTOR_TYPE_PLAYER                           ;
                         dc.w    0,0                                         ;
                         dc.w    BASE_FIRE_INTERVAL                          ;
                         dc.w    BULLET_TYPE_BASE                            ;
@@ -119,7 +125,8 @@ pl_instance2            dc.w    64,0,PLAYER_STARTING_POSY,0                 ;
                         dc.w    PLAYER_MAX_ANIM_DELAY                       ;
                         dc.w    PLAYER_INV_STATE_DURATION                   ;
                         dc.w    PLAYER_FLASH_DURATION                       ;
-                        dc.w    1                                           ;
+                        dc.w    1,1                                         ;
+                        dc.w    ACTOR_TYPE_PLAYER                           ;
                         dc.w    0,0                                         ;
                         dc.w    BASE_FIRE_INTERVAL                          ;
                         dc.w    BULLET_TYPE_BASE                            ;
@@ -145,6 +152,7 @@ update_players:
     bsr         move_player_with_joystick
     bsr         process_actor_movement
     bsr         updateAnimation
+    bsr         UpdateFireTimer
     bsr         draw_actor
 
     rts
@@ -170,6 +178,40 @@ draw_actor:
 
     bsr         draw_bob
 .return:
+    movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
+    rts
+
+; if there's anything left int he fire_timer, tick it down
+; @params: a6 - address of the player instance being updated
+UpdateFireTimer:
+    cmpi        #0,actor.fire_timer(a6)
+    beq         .nothingToDo
+    subi        #1,actor.fire_timer(a6)
+.nothingToDo:
+    rts
+
+; checks all the timers and conditons needed to fire a projectile
+; @params: a6 - address of the player instance firing a projectile
+FireProjectile:
+    movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
+    cmpi        #0,actor.fire_timer(a6)
+    bne         .cantFire                                           ; if anything left in the fire timer, we can't shoot yet
+
+    move.w      actor.x(a6),d0
+    move.w      actor.y(a6),d1
+    move.w      #48,d2
+    move.w      #0,d3
+    move.w      #0,d4
+    move.l      a6,a0                                               ; save actor reference
+    bsr         SpawnProjectile
+    move.l      a0,a6                                               ; restore actor reference
+    move.w      actor.fire_delay(a6),actor.fire_timer(a6)           ; set the fire cooldown timer
+    ; play a fire sound
+    lea         TRIANGLE,a6
+    move.w      #TRIANGLE_LEN/2,d0
+    move.w      0,d1
+    bsr         PlaySampleOnChannel
+.cantFire
     movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
     rts
 
@@ -219,6 +261,9 @@ process_actor_movement:
 
 ; @params: a6 - address of the current actor instance to update
 update_jump_velocity:
+    ; first see if actor even respects gravity, if not, then just skip the function
+    cmpi        #1,actor.gravity(a6)
+    bne         .endFunc
     ; first to see if the timer is set, if the timer isn't set, then we haven't jumped
     cmpi        #0,actor.jump_decel_timer(a6)
     ble         .applyNormalGravity                                 ; skip if there's no slow timer left
@@ -268,6 +313,7 @@ update_jump_velocity:
     move.w      #0,d5                                               ; reset velocity
     ; false
 .falseResult:
+.endFunc:
     rts
 
 ; to be called only from the process movement function
@@ -351,33 +397,41 @@ apply_velocities:
 
 ; to be called only from the process movement function
 bounds_check:
-    cmpi        #PLAYER_BOUNDARY_MAX_X,d0
+    move.w      #SCREEN_BOUNDARY_MAX_X,d7
+    sub.w       actor.width(a6),d7
+    cmp         d7,d0
     bge         .boundsHighX
-    cmpi        #PLAYER_BOUNDARY_MIN_X,d0
+    cmpi        #SCREEN_BOUNDARY_MIN_X,d0
     blt         .boundsLowX
     bra         .boundsCheckY
 .boundsHighX
-    move.w      #PLAYER_BOUNDARY_MAX_X,d0
+    move.w      #SCREEN_BOUNDARY_MAX_X,d7
+    sub.w       actor.width(a6),d7
+    move.w      d7,d0
     move.w      #0,d2
     move.w      #0,d4
     bra         .boundsCheckY
 .boundsLowX
-    move.w      #PLAYER_BOUNDARY_MIN_X,d0
+    move.w      #SCREEN_BOUNDARY_MIN_X,d0
     move.w      #0,d2
     move.w      #0,d4
 .boundsCheckY
-    cmpi        #PLAYER_BOUNDARY_MAX_Y,d1
+    move.w      #SCREEN_BOUNDARY_MAX_Y,d7
+    sub.w       actor.height(a6),d7
+    cmp         d7,d1
     bge         .boundsHighY
-    cmpi        #PLAYER_BOUNDARY_MIN_Y,d1
+    cmpi        #SCREEN_BOUNDARY_MIN_Y,d1
     ble         .boundsLowY
     bra         .boundsCheckOver
 .boundsHighY
-    move.w      #PLAYER_BOUNDARY_MAX_Y,d1
+    move.w      #SCREEN_BOUNDARY_MAX_Y,d7
+    sub.w       actor.height(a6),d7
+    move.w      d7,d1
     move.w      #0,d3
     move.w      #0,d5
     bra         .boundsCheckOver
 .boundsLowY
-    move.w      #PLAYER_BOUNDARY_MIN_Y,d1
+    move.w      #SCREEN_BOUNDARY_MIN_Y,d1
     move.w      #0,d3
     move.w      #0,d5
 .boundsCheckOver
@@ -414,6 +468,13 @@ move_player_with_joystick:
     ; left and right handled by adjust X Velocity function
     bsr         adjustXVelocityPlayer
 .no_right:
+
+.button_check:
+    move.w      joystick.button1(a4),d6
+    btst        #0,d6
+    beq         .no_button
+    bsr         FireProjectile
+.no_button:
 
 .end_joystick_check:
     ; save the velocities

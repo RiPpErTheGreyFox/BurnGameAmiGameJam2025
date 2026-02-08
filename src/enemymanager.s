@@ -164,17 +164,17 @@ InitialiseEnemyPool:
 ; bring all values back to sane and empty/default values
 ; @params: a6 - address of the enemy to initialise
 InitialiseEnemy:
-    move.w      #ENEMY_STARTING_POSX,actor.x(a6)                                       ;actor.x               
-    move.w      #0,actor.subpixel_x(a6)                              ;actor.subpixel_x      
-    move.w      #ENEMY_STARTING_POSY,actor.y(a6)                                       ;actor.y               
-    move.w      #0,actor.subpixel_y(a6)                              ;actor.subpixel_y      
-    move.w      #0,actor.velocity_x(a6)                              ;actor.velocity_x      
-    move.w      #0,actor.velocity_y(a6)                              ;actor.velocity_y      
+    move.w      #ENEMY_STARTING_POSX,actor.x(a6)                    ;actor.x               
+    move.w      #0,actor.subpixel_x(a6)                             ;actor.subpixel_x      
+    move.w      #ENEMY_STARTING_POSY,actor.y(a6)                    ;actor.y               
+    move.w      #0,actor.subpixel_y(a6)                             ;actor.subpixel_y      
+    move.w      #0,actor.velocity_x(a6)                             ;actor.velocity_x      
+    move.w      #0,actor.velocity_y(a6)                             ;actor.velocity_y      
     move.l      #enemy_gfx,actor.bobdata(a6)                        ;actor.bobdata         
     move.l      #enemy_mask,actor.mask(a6)                          ;actor.mask            
-    move.w      #0,actor.current_frame(a6)                           ;actor.current_frame   
+    move.w      #0,actor.current_frame(a6)                          ;actor.current_frame   
     move.w      #ENEMY_ANIM_IDLE,actor.current_anim(a6)             ;actor.current_anim    
-    move.w      #0,actor.respectsBounds(a6)                          ;actor.respectsBounds  
+    move.w      #0,actor.respectsBounds(a6)                         ;actor.respectsBounds  
     move.w      #ENEMY_WIDTH,actor.width(a6)                        ;actor.width           
     move.w      #ENEMY_HEIGHT,actor.height(a6)                      ;actor.height          
     move.w      #ENEMY_SPRITESHEET_WIDTH,actor.spritesheetwidth(a6) ;actor.spritesheetwidth
@@ -185,12 +185,13 @@ InitialiseEnemy:
     move.w      #ENEMY_MAX_ANIM_DELAY,actor.anim_timer(a6)          ;actor.anim_timer      
     move.w      #ENEMY_INV_STATE_DURATION,actor.inv_timer(a6)       ;actor.inv_timer       
     move.w      #ENEMY_FLASH_DURATION,actor.flash_timer(a6)         ;actor.flash_timer     
-    move.w      #1,actor.visible(a6)                                ;actor.visible         
-    move.w      #0,actor.jump_decel_timer(a6)                        ;actor.jump_decel_timer
-    move.w      #0,actor.fire_timer(a6)                              ;actor.fire_timer      
+    move.w      #0,actor.visible(a6)                                ;actor.visible
+    move.w      #1,actor.gravity(a6)                                ;actor.gravity         
+    move.w      #0,actor.jump_decel_timer(a6)                       ;actor.jump_decel_timer
+    move.w      #0,actor.fire_timer(a6)                             ;actor.fire_timer      
     move.w      #BASE_FIRE_INTERVAL,actor.fire_delay(a6)            ;actor.fire_delay      
     move.w      #BULLET_TYPE_BASE,actor.fire_type(a6)               ;actor.fire_type       
-    move.l      #0,actor.controller_addr(a6)                         ;actor.controller_addr 
+    move.l      #0,actor.controller_addr(a6)                        ;actor.controller_addr 
 
     rts
 

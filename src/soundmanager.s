@@ -74,20 +74,20 @@ StopAllSounds:
 TRIANGLE:
     DC.B        0, 20, 40, 60, 80, 100, 80, 60, 40, 20
     DC.B        0,-20,-40,-60,-80,-100,-80,-60,-40,-20
-TRIANGLE_END
+TRIANGLE_LEN=*-TRIANGLE
 
 SINE:
     DC.B        0, 39, 75, 103, 121, 127, 121, 103, 75, 39
     DC.B        0,-39,-75,-103,-121,-127,-121,-103,-75,-39
-SINE_END
+SINE_LEN=*-SINE
 
 SQUARE:
     DC.B        100, 100, 100, 100, 100, 100, 100, 100, 100
     DC.B        -100,-100,-100,-100,-100,-100,-100,-100,-100
-SQUARE_END
+SQUARE_LEN=*-SQUARE
 
 JUMPSOUND:
-    INCBIN      "assets/sounds/secretsample.sb"
+    INCBIN      "assets/sounds/sinesample.sb"
 JUMPSOUND_LEN=*-JUMPSOUND
 
 TESTSAMPLE:
