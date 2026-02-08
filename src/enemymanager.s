@@ -50,7 +50,6 @@ EnemyManagerStart:
 
 UpdateEnemies:
     movem.l     d0-a6,-(sp)
-
     ; iterate through the array and run the updates of them all
     lea         enemy_array,a6
     move.w      #ENEMY_MAX_COUNT-1,d0                               ; off by one
@@ -60,6 +59,21 @@ UpdateEnemies:
     bsr         ProcessEnemyAI
     bsr         process_actor_movement
     bsr         updateAnimation
+.loopEnd:
+    adda        #actor.length,a6
+    dbra        d0,.loopStart                                       ; repeat number of times for every projectile
+
+    movem.l     (sp)+,d0-a6
+    rts
+
+DrawEnemies:
+    movem.l     d0-a6,-(sp)
+    ; iterate through the array and draw them all
+    lea         enemy_array,a6
+    move.w      #ENEMY_MAX_COUNT-1,d0                               ; off by one
+.loopStart:
+    cmpi        #0,actor.visible(a6)
+    beq         .loopEnd
     bsr         draw_actor
 .loopEnd:
     adda        #actor.length,a6

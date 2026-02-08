@@ -46,9 +46,14 @@ mainloop:
 
     ; run major updates
     bsr         UpdateProjectileManager
-    bsr         update_players
+    bsr         UpdatedPlayers
     bsr         UpdateEnemies
 
+    ; run drawing updates
+    bsr         DrawPlayers
+    bsr         DrawEnemies
+    bsr         DrawProjectiles
+    
 ;    bsr         isConfirmPressed        ; is confirm pressed?
     lea         joystick1_instance,a6
     move.w      joystick.button1(a6),d0
@@ -71,6 +76,7 @@ shutdown:
     bsr         release_system
     rts
 
+    INCLUDE         "actorroutines.s"
     INCLUDE         "controllerroutines.s"
     INCLUDE         "drawingroutines.s"
     INCLUDE         "systemroutines.s"

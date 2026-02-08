@@ -52,10 +52,25 @@ UpdateProjectileManager:
 ; @params: a6 - address of the projectile to be updated
 UpdateProjectile:
     bsr         process_actor_movement
-    bsr         draw_actor
     ; TODO: remove this and make projectiles detect properly
     cmpi        #300,actor.x(a6)
     bge         DespawnActor
+    rts
+
+DrawProjectiles:
+    movem.l     d0-a6,-(sp)
+    ; iterate through the array and draw them all
+    lea         projectile_array,a6
+    move.w      #PROJECTILE_MAX_COUNT-1,d0                               ; off by one
+.loopStart:
+    cmpi        #0,actor.visible(a6)
+    beq         .loopEnd
+    bsr         draw_actor
+.loopEnd:
+    adda        #actor.length,a6
+    dbra        d0,.loopStart                                       ; repeat number of times for every projectile
+
+    movem.l     (sp)+,d0-a6
     rts
 
 CollisionProjectileCheck:
