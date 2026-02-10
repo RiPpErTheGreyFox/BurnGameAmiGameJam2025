@@ -59,19 +59,19 @@ actor.length            rs.b        0
 draw_actor:
     movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
 
-    tst.w       actor.visible(a6)                                  ; player is visible?
-    beq         .return                                             ; 
-    move.l      actor.bobdata(a6),a0                               ; player's image address
-    move.l      actor.mask(a6),a1                                  ; player's mask address
+    tst.w       actor.visible(a6)                                   ; actor is visible?
+    beq         .return                                             ; if not, stop
+    move.l      actor.bobdata(a6),a0                                ; actor's image address
+    move.l      actor.mask(a6),a1                                   ; actor's mask address
     move.l      draw_buffer,a2                                      ; destination video buffer address
-    move.w      actor.x(a6),d0                                     ; x position of the player in pixels
-    move.w      actor.y(a6),d1                                     ; y position of the player in pixels
-    move.w      actor.width(a6),d2                                    ; player width in pixels
-    move.w      actor.height(a6),d3                                   ; player height in pixels
-    move.w      actor.current_anim(a6),d4                          ; spritesheet column of player
-    move.w      actor.current_frame(a6),d5                         ; spritesheet row of player
-    move.w      actor.spritesheetwidth(a6),a3                        ; spritesheet width
-    move.w      actor.spritesheetheight(a6),a4                       ; spritesheet height
+    move.w      actor.x(a6),d0                                      ; x position of the actor in pixels
+    move.w      actor.y(a6),d1                                      ; y position of the actor in pixels
+    move.w      actor.width(a6),d2                                  ; actor width in pixels
+    move.w      actor.height(a6),d3                                 ; actor height in pixels
+    move.w      actor.current_anim(a6),d4                           ; spritesheet column of actor
+    move.w      actor.current_frame(a6),d5                          ; spritesheet row of actor
+    move.w      actor.spritesheetwidth(a6),a3                       ; spritesheet width
+    move.w      actor.spritesheetheight(a6),a4                      ; spritesheet height
 
     bsr         draw_bob
 .return:
@@ -98,12 +98,12 @@ set_actor_position:
 process_actor_movement:
     movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
 
-    move.w      actor.x(a6),d0                                     ; d0 = x
-    move.w      actor.y(a6),d1                                     ; d1 = y
-    move.w      actor.subpixel_x(a6),d2                            ; d2 = subpixel_x
-    move.w      actor.subpixel_y(a6),d3                            ; d3 = subpixel_y
-    move.w      actor.velocity_x(a6),d4                            ; d4 = velocity_x
-    move.w      actor.velocity_y(a6),d5                            ; d5 = velocity_y
+    move.w      actor.x(a6),d0                                      ; d0 = x
+    move.w      actor.y(a6),d1                                      ; d1 = y
+    move.w      actor.subpixel_x(a6),d2                             ; d2 = subpixel_x
+    move.w      actor.subpixel_y(a6),d3                             ; d3 = subpixel_y
+    move.w      actor.velocity_x(a6),d4                             ; d4 = velocity_x
+    move.w      actor.velocity_y(a6),d5                             ; d5 = velocity_y
 
     bsr         update_jump_velocity
     bsr         apply_velocities
@@ -113,7 +113,7 @@ process_actor_movement:
     
 .EndOfFunc:
     ; apply all the updates
-    move.w      d0,actor.x(a6)                                     ; move the final stats back into memory
+    move.w      d0,actor.x(a6)                                      ; move the final stats back into memory
     move.w      d1,actor.y(a6)
     move.w      d2,actor.subpixel_x(a6)
     move.w      d3,actor.subpixel_y(a6)
@@ -206,8 +206,8 @@ apply_velocities:
 .spilloverXHigh:
     ; run the loop to add pixels until subpixel's back below threshold
     addq        #1,d0                                               ; increment full pixel count
-    subi        #ACTOR_SUBPIXEL_PER_PIXEL,d2                       ; reduce subpixel count by a full pixel
-    cmpi.w      #ACTOR_SUBPIXEL_PER_PIXEL,d2                       ; check if there's more pixels to process
+    subi        #ACTOR_SUBPIXEL_PER_PIXEL,d2                        ; reduce subpixel count by a full pixel
+    cmpi.w      #ACTOR_SUBPIXEL_PER_PIXEL,d2                        ; check if there's more pixels to process
     bge         .spilloverXHigh                                     ; loop
     bra         .checkYVelocity                                     ; otherwise we're done
 .spilloverXLow:
@@ -222,7 +222,7 @@ apply_velocities:
     ; check if velocity isn't zero                                  
     tst         d5
     bne         .applyYVelocity                                     ; if the test value came back with Z flag set
-    bra         .endOfFunc                                        ; just skip as there's no velocity to apply
+    bra         .endOfFunc                                          ; just skip as there's no velocity to apply
 .applyYVelocity:
     ; YVelocity is a TODO:
     ; check the current velocity for positive or negative
@@ -235,7 +235,7 @@ apply_velocities:
     ; if subpixel > PLAYER_SUB PIXEL_PER_PIXEL then adjust the full count
     cmpi.w      #ACTOR_SUBPIXEL_PER_PIXEL,d3
     bge         .spilloverYHigh
-    bra         .endOfFunc                                        ; otherwise we're done
+    bra         .endOfFunc                                          ; otherwise we're done
 .YNegative: 
     add.w       d5,d3
     cmpi.w      #0,d3
@@ -244,10 +244,10 @@ apply_velocities:
 .spilloverYHigh:
     ; run the loop to add pixels until subpixel's back below threshold
     addq        #1,d1                                               ; increment full pixel count
-    subi        #ACTOR_SUBPIXEL_PER_PIXEL,d3                       ; reduce subpixel count by a full pixel
-    cmpi.w      #ACTOR_SUBPIXEL_PER_PIXEL,d3                       ; check if there's more pixels to process
+    subi        #ACTOR_SUBPIXEL_PER_PIXEL,d3                        ; reduce subpixel count by a full pixel
+    cmpi.w      #ACTOR_SUBPIXEL_PER_PIXEL,d3                        ; check if there's more pixels to process
     bge         .spilloverYHigh                                     ; loop
-    bra         .endOfFunc                                        ; otherwise we're done
+    bra         .endOfFunc                                          ; otherwise we're done
 .spilloverYLow:
     ; run the loop to remove pixels until subpixel's back below threshold
     subq        #1,d1
@@ -303,10 +303,10 @@ bounds_check:
 ; TODO: Do frame swapping with lookup tables and the like
 ; @params: a6 - address of the player instance to update
 updateAnimation:
-; check for animation swap
-    move.w      actor.velocity_x(a6),d4                            ; d4 = velocity_x
-    move.w      actor.current_frame(a6),d6                         ; d6 = current anim frame
-    move.w      actor.anim_timer(a6),d7                            ; d7 = current frame timer
+    ; check for animation swap
+    move.w      actor.velocity_x(a6),d4                             ; d4 = velocity_x
+    move.w      actor.current_frame(a6),d6                          ; d6 = current anim frame
+    move.w      actor.anim_timer(a6),d7                             ; d7 = current frame timer
 
     tst         d4
     beq         .idleAnim
@@ -330,7 +330,7 @@ updateAnimation:
     subq        #1,d7
     bne         .EndOfFunc
 .NextFrame:
-    move.w      actor.anim_delay(a6),d7                            ; reset the timer
+    move.w      actor.anim_delay(a6),d7                             ; reset the timer
     addq        #1,d6                                               ; increment the frame counter
     cmpi        #PLAYER_MAX_FRAME_COUNT,d6                          ; check if we've hit the max frame counter
     bne         .EndOfFunc                                          ; if not, jump over the reset
@@ -339,7 +339,7 @@ updateAnimation:
     move.w      #0,d6
 
 .EndOfFunc:
-; save all our changed variables before leaving
+    ; save all our changed variables before leaving
     move.w      d1,actor.current_anim(a6)
     move.w      d6,actor.current_frame(a6)
     move.w      d7,actor.anim_timer(a6)

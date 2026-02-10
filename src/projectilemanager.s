@@ -55,9 +55,8 @@ UpdateProjectile:
     ; TODO: testing hitting enemies
     move.w      #ACTOR_TYPE_ENEMY,d0
     bsr         FindEntityCollidedWith
-    move.l      a4,d6
-    cmpi        #0,d6
-    bne         .EnemyHit
+    cmpi        #1,d6
+    beq         .EnemyHit
     bra         .DespawnCheck
 .EnemyHit:
     ; save reference to a6 to call despawn

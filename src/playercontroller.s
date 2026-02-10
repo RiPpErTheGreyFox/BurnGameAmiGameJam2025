@@ -52,7 +52,7 @@ pl_instance1            dc.w    PLAYER_STARTING_POSX,0,PLAYER_STARTING_POSY,0;
                         dc.w    1                                           ;
                         dc.w    PLAYER_WIDTH,PLAYER_HEIGHT                  ;
                         dc.w    PLAYER_SPRITESHEET_WIDTH,PLAYER_SPRITESHEET_HEIGHT                                 ;
-                        dc.w    ACTOR_STATE_INACTIVE                         ;
+                        dc.w    ACTOR_STATE_ACTIVE                          ;
                         dc.w    PLAYER_MOVEMENT_STATE_NORMAL                ;
                         dc.w    PLAYER_MAX_ANIM_DELAY                       ;
                         dc.w    PLAYER_MAX_ANIM_DELAY                       ;
@@ -75,7 +75,7 @@ pl_instance2            dc.w    64,0,PLAYER_STARTING_POSY,0                 ;
                         dc.w    1                                           ;
                         dc.w    PLAYER_WIDTH,PLAYER_HEIGHT                  ;
                         dc.w    PLAYER_SPRITESHEET_WIDTH,PLAYER_SPRITESHEET_HEIGHT 
-                        dc.w    ACTOR_STATE_INACTIVE                         ;
+                        dc.w    ACTOR_STATE_ACTIVE                          ;
                         dc.w    PLAYER_MOVEMENT_STATE_NORMAL                ;
                         dc.w    PLAYER_MAX_ANIM_DELAY                       ;
                         dc.w    PLAYER_MAX_ANIM_DELAY                       ;
@@ -170,13 +170,18 @@ FireProjectile:
 ; @params: a6 - address of the player instance to update
 move_player_with_joystick:
     movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
-                                                                    ; move player stats into data registers
-    move.w      actor.x(a6),d0                                     ; d0 = x
-    move.w      actor.y(a6),d1                                     ; d1 = y
-    move.w      actor.subpixel_x(a6),d2                            ; d2 = subpixel_x
-    move.w      actor.subpixel_y(a6),d3                            ; d3 = subpixel_y
-    move.w      actor.velocity_x(a6),d4                            ; d4 = velocity_x
-    move.w      actor.velocity_y(a6),d5                            ; d5 = velocity_y
+
+    ; move player stats into data registers
+    move.w      actor.x(a6),d0                                      ; d0 = x
+    move.w      actor.y(a6),d1                                      ; d1 = y
+    move.w      actor.subpixel_x(a6),d2                             ; d2 = subpixel_x
+    move.w      actor.subpixel_y(a6),d3                             ; d3 = subpixel_y
+    move.w      actor.velocity_x(a6),d4                             ; d4 = velocity_x
+    move.w      actor.velocity_y(a6),d5                             ; d5 = velocity_y
+
+    move.w      actor.state(a6),d6
+    cmpi        #ACTOR_STATE_ACTIVE,actor.state(a6)                 ; only proceed with letting player control if player is active
+    bne         .end_joystick_check
 
     move.w      joystick.up(a4),d6
     btst        #0,d6
@@ -186,15 +191,8 @@ move_player_with_joystick:
     move.w      joystick.down(a4),d6
     btst        #0,d6
     beq         .no_down
-    ;add.w       #1,d1
 .no_down:
-    ;move.w      joystick.left(a4),d6
-    ;btst        #0,d6
-    ;beq         .no_left
-    ;sub.w       #1,d0
 .no_left:
-    ; left and right handled by adjust X Velocity function
-    bsr         adjustXVelocityPlayer
 .no_right:
 
 .button_check:
@@ -205,10 +203,13 @@ move_player_with_joystick:
 .no_button:
 
 .end_joystick_check:
+    ; run the velocity updates
+    ; left and right handled by adjust X Velocity function
+    bsr         adjustXVelocityPlayer
     ; save the velocities
     move.w      d4,actor.velocity_x(a6)
-    move.w      d5,actor.velocity_y(a6)
-    
+    move.w      d5,actor.velocity_y(a6) 
+
     movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
     rts
 
@@ -240,39 +241,44 @@ player_jump:
 ; should be called by move_player_with_joystick
 ; @params: a4 - address of the joystick instance to update
 ; @params: a6 - address of the player instance to update
+; @clobbers: d4,d5,d6
 adjustXVelocityPlayer:
     move.w      actor.velocity_x(a6),d4                            ; d4 = velocity_x
+    ; check if the player is allowed to make inputs, otherwise assume no input
+    cmpi        #ACTOR_STATE_ACTIVE,actor.state(a6)
+    bne         .DecayXVel
 
-    ; if increasing, then increase velocity, otherwise decay it
+.ProcessInput:
+    ; if moving, then increase velocity, otherwise decay it
     move.w      joystick.right(a4),d6
     cmpi.w      #1,d6                                               ; test if joystick is held to right
     beq         .SlideUpXVel                                        ; slide up XVel
-    move.w      joystick.left(a4),d6                                ; otherwise if held to the left
-    cmpi.w      #1,d6
+    move.w      joystick.left(a4),d6
+    cmpi.w      #1,d6                                               ; otherwise if held to the left
     beq         .SlideDownXVel                                      ; slide down it
     bra         .DecayXVel                                          ; if not, decay the X Velocity
-.SlideUpXVel
+.SlideUpXVel:
     cmpi        #PLAYER_MAXVELOCITY_X,d4                            ; check if x velocity is >= max
     bge         .XVelPosCheckDone                                   ; skip if it is
     addq        #PLAYER_ACCELERATION,d4                             ; otherwise increase by acceleration
     bra         .XVelPosCheckDone
-.SlideDownXVel
+.SlideDownXVel:
     cmpi        #-PLAYER_MAXVELOCITY_X,d4
     ble         .XVelPosCheckDone
     subq        #PLAYER_ACCELERATION,d4
     bra         .XVelPosCheckDone
-.DecayXVel
+.DecayXVel:
     tst         d4                                                  ; if XVel is 0 nothing more to do
     beq         .XVelPosCheckDone
     blt         .DecayUp                                            ; if < 0 then decay speed up
     bgt         .DecayDown                                          ; if > 0 then decay speed down
     ; check if current velocity is negative
-.DecayUp
+.DecayUp:
     addq        #PLAYER_ACCELERATION,d4
     bra         .XVelPosCheckDone
-.DecayDown
+.DecayDown:
     subq        #PLAYER_DECELERATION,d4                             ; reduce by deceleration
-.XVelPosCheckDone
+.XVelPosCheckDone:
 
     ; save the velocities
     move.w      d4,actor.velocity_x(a6)
@@ -295,4 +301,18 @@ player_screen_scrolled:
     add.w       d0,actor.x(a6)
     add.w       d1,actor.y(a6)
     movem.l     (sp)+,d0-a6                                         ; restore registers onto the stack
+    rts
+
+; function that's called from foreign entities to apply damage and hit effects to the player
+; @params: a4 - target player
+; @params: d0 - amount of damage
+; @params: d1 - knockback x
+; @params: d2 - knockback y
+PlayerHit:
+    ; check to see if player is able to be hit (in active state)
+    ; if they are, swap them to the hit state and apply damage/knockback
+    move.l      a6,a0
+    move.l      a4,a6
+    bsr         DespawnActor
+    move.l      a0,a6
     rts

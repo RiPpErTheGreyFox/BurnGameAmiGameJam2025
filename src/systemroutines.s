@@ -115,7 +115,7 @@ Ninc2:
 ; @params: a6 - the source entity
 ; @params: d0 - actor.type we're intending to collide with
 ; @returns: a4 - first entity found that's been collided with, zero if no collisions
-; @clobbers: d6
+; @returns: d6 - 1 if collision found, 0 if no collisions
 FindEntityCollidedWith:
     ; jump to the loop we're intending to interact which
     ; check's the actor type we're looking for
@@ -155,8 +155,11 @@ FindEntityCollidedWith:
     adda        #actor.length,a4
     dbra        d6,.loopStart
 .EntityNotFound:
+    move.l      #0,d6
     move.l      #0,a4
+    rts
 .EntityFound:
+    move.l      #1,d6
     rts
 
 ; takes an X/Y and determines if that's "within" the size of a provided entity

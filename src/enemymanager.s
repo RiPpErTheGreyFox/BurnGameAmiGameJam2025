@@ -57,6 +57,7 @@ UpdateEnemies:
     cmpi        #ACTOR_STATE_INACTIVE,actor.state(a6)
     beq         .loopEnd
     bsr         ProcessEnemyAI
+    bsr         CheckEnemyPlayerCollision
     bsr         process_actor_movement
     bsr         updateAnimation
 .loopEnd:
@@ -92,7 +93,7 @@ ProcessEnemyAI:
     ble         .respawnEnemy
     bra         .keepgoingleft
 .respawnEnemy
-    move.w      #ENEMY_STARTING_POSX,d0
+    move.w      #SCREEN_BOUNDARY_MAX_X-ENEMY_WIDTH,d0
     move.w      #ENEMY_STARTING_POSY,d1
     bsr         set_actor_position
 
@@ -105,11 +106,29 @@ ProcessEnemyAI:
     movem.l     (sp)+,d0-a6 
     rts
 
+; function which checks to see if enemies have run into players or not
+; @params: a6 - current enemy doing the checks
+CheckEnemyPlayerCollision:
+    movem.l     d0-a6,-(sp)
+    move.w      #ACTOR_TYPE_PLAYER,d0
+    bsr         FindEntityCollidedWith
+    cmpi        #1,d6
+    beq         .PlayerHit
+    movem.l     (sp)+,d0-a6 
+    rts
+.PlayerHit
+    ; call the players "is hit" function
+    bsr         PlayerHit
+    movem.l     (sp)+,d0-a6 
+    rts
+
 ; should be called by enemy_ai_process
 ; @params: d0 - -1 = moving left, 0 = no input, 1 = moving right
 ; @params: a6 - address of the actor instance to update
 AdjustXVelocityEnemy:
     move.w      actor.velocity_x(a6),d4                             ; d4 = velocity_x
+    cmpi        #ACTOR_STATE_ACTIVE,actor.state(a6)
+    bne         .DecayXVel
 
     ; if increasing, then increase velocity, otherwise decay it
     cmpi.w      #1,d0                                               ; test if AI is going to right

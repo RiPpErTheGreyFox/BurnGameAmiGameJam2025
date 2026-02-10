@@ -33,7 +33,7 @@ main:
     bsr         SpawnEnemy
     move.w      #166,d0
     bsr         SpawnEnemy
-    move.w      #69,d0
+    move.w      #269,d0
     bsr         SpawnEnemy
 
 mainloop:
