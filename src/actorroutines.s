@@ -9,7 +9,8 @@ ACTOR_GRAVITY_SLOW              equ 1                       ; in sp/f
 ACTOR_STATE_ACTIVE              equ 0
 ACTOR_STATE_HIT                 equ 1
 ACTOR_STATE_INVINCIBLE          equ 2
-ACTOR_STATE_INACTIVE            equ 3
+ACTOR_STATE_DEAD                equ 3
+ACTOR_STATE_INACTIVE            equ 4
 
 ACTOR_TYPE_PLAYER               equ 0
 ACTOR_TYPE_ENEMY                equ 1

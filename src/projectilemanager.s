@@ -129,6 +129,7 @@ InitialiseProjectile:
     move.w      #0,actor.flash_timer(a6)                            ;actor.flash_timer     
     move.w      #0,actor.visible(a6)                                ;actor.visible
     move.w      #0,actor.gravity(a6)                                ;actor.gravity         
+    move.w      #ACTOR_TYPE_PROJECTILE,actor.type(a6)               ;actor.type         
     move.w      #0,actor.jump_decel_timer(a6)                       ;actor.jump_decel_timer
     move.w      #0,actor.fire_timer(a6)                             ;actor.fire_timer      
     move.w      #0,actor.fire_delay(a6)                             ;actor.fire_delay      

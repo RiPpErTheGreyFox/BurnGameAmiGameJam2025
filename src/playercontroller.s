@@ -42,66 +42,89 @@ BASE_FIRE_INTERVAL              equ 7                       ; delay between two 
 BULLET_TYPE_BASE                equ 0                       ; types of bullets
 
 ;----------- Variables --------
-; player instance
-pl_instance1            dc.w    PLAYER_STARTING_POSX,0,PLAYER_STARTING_POSY,0;
-                        dc.w    0,0                                         ;
-                        dc.l    player_gfx                                  ;
-                        dc.l    player_mask                                 ;
-                        dc.w    0                                           ;
-                        dc.w    PLAYER_ANIM_IDLE                            ;
-                        dc.w    1                                           ;
-                        dc.w    PLAYER_WIDTH,PLAYER_HEIGHT                  ;
-                        dc.w    PLAYER_SPRITESHEET_WIDTH,PLAYER_SPRITESHEET_HEIGHT                                 ;
-                        dc.w    ACTOR_STATE_ACTIVE                          ;
-                        dc.w    PLAYER_MOVEMENT_STATE_NORMAL                ;
-                        dc.w    PLAYER_MAX_ANIM_DELAY                       ;
-                        dc.w    PLAYER_MAX_ANIM_DELAY                       ;
-                        dc.w    PLAYER_INV_STATE_DURATION                   ;
-                        dc.w    PLAYER_FLASH_DURATION                       ;
-                        dc.w    1,1                                         ;
-                        dc.w    ACTOR_TYPE_PLAYER                           ;
-                        dc.w    0,0                                         ;
-                        dc.w    BASE_FIRE_INTERVAL                          ;
-                        dc.w    BULLET_TYPE_BASE                            ;
-                        dc.l    joystick1_instance                          ;
-
-                        ; player instance
-pl_instance2            dc.w    64,0,PLAYER_STARTING_POSY,0                 ;
-                        dc.w    0,0                                         ;
-                        dc.l    player_gfx                                  ;
-                        dc.l    player_mask                                 ;
-                        dc.w    0                                           ;
-                        dc.w    PLAYER_ANIM_WALK                            ;
-                        dc.w    1                                           ;
-                        dc.w    PLAYER_WIDTH,PLAYER_HEIGHT                  ;
-                        dc.w    PLAYER_SPRITESHEET_WIDTH,PLAYER_SPRITESHEET_HEIGHT 
-                        dc.w    ACTOR_STATE_ACTIVE                          ;
-                        dc.w    PLAYER_MOVEMENT_STATE_NORMAL                ;
-                        dc.w    PLAYER_MAX_ANIM_DELAY                       ;
-                        dc.w    PLAYER_MAX_ANIM_DELAY                       ;
-                        dc.w    PLAYER_INV_STATE_DURATION                   ;
-                        dc.w    PLAYER_FLASH_DURATION                       ;
-                        dc.w    1,1                                         ;
-                        dc.w    ACTOR_TYPE_PLAYER                           ;
-                        dc.w    0,0                                         ;
-                        dc.w    BASE_FIRE_INTERVAL                          ;
-                        dc.w    BULLET_TYPE_BASE                            ;
-                        dc.l    joystick2_instance                          ;
+; player instances
+pl_instance1            dcb.b   actor.length
+pl_instance2            dcb.b   actor.length
 
 ;---------- Subroutines -------
     SECTION CODE
 
-playercontrollerstart:
+PlayerControllerStart:
+    lea         pl_instance1,a6
+    bsr         InitialisePlayer
+    move.l      #joystick1_instance,actor.controller_addr(a6)       ; assign joystick 1 to player 1
+    bsr         SpawnPlayer
+    lea         pl_instance2,a6
+    bsr         InitialisePlayer
+    move.l      #joystick2_instance,actor.controller_addr(a6)       ; assign joystick 2 to player 2
+    bsr         SpawnPlayer
     rts
 
-UpdatedPlayers:
+; creates a sane starting point for the player actor structure
+; @params: a6 - the actor object to initialise as a player
+InitialisePlayer:
+    move.w      #PLAYER_STARTING_POSX,actor.x(a6)                   ;actor.x               
+    move.w      #0,actor.subpixel_x(a6)                             ;actor.subpixel_x      
+    move.w      #PLAYER_STARTING_POSY,actor.y(a6)                   ;actor.y               
+    move.w      #0,actor.subpixel_y(a6)                             ;actor.subpixel_y      
+    move.w      #0,actor.velocity_x(a6)                             ;actor.velocity_x      
+    move.w      #0,actor.velocity_y(a6)                             ;actor.velocity_y      
+    move.l      #player_gfx,actor.bobdata(a6)                       ;actor.bobdata         
+    move.l      #player_mask,actor.mask(a6)                         ;actor.mask            
+    move.w      #0,actor.current_frame(a6)                          ;actor.current_frame   
+    move.w      #PLAYER_ANIM_IDLE,actor.current_anim(a6)            ;actor.current_anim    
+    move.w      #1,actor.respectsBounds(a6)                         ;actor.respectsBounds  
+    move.w      #PLAYER_WIDTH,actor.width(a6)                       ;actor.width           
+    move.w      #PLAYER_HEIGHT,actor.height(a6)                     ;actor.height          
+    move.w      #PLAYER_SPRITESHEET_WIDTH,actor.spritesheetwidth(a6);actor.spritesheetwidth
+    move.w      #PLAYER_SPRITESHEET_HEIGHT,actor.spritesheetheight(a6);actor.spritesheetheight
+    move.w      #ACTOR_STATE_INACTIVE,actor.state(a6)               ;actor.state           
+    move.w      #PLAYER_MOVEMENT_STATE_NORMAL,actor.movement_state(a6);actor.movement_state  
+    move.w      #PLAYER_MAX_ANIM_DELAY,actor.anim_delay(a6)         ;actor.anim_delay      
+    move.w      #PLAYER_MAX_ANIM_DELAY,actor.anim_timer(a6)         ;actor.anim_timer      
+    move.w      #PLAYER_INV_STATE_DURATION,actor.inv_timer(a6)      ;actor.inv_timer       
+    move.w      #PLAYER_FLASH_DURATION,actor.flash_timer(a6)        ;actor.flash_timer     
+    move.w      #0,actor.visible(a6)                                ;actor.visible
+    move.w      #1,actor.gravity(a6)                                ;actor.gravity         
+    move.w      #ACTOR_TYPE_PLAYER,actor.type(a6)                   ;actor.type
+    move.w      #0,actor.jump_decel_timer(a6)                       ;actor.jump_decel_timer
+    move.w      #0,actor.fire_timer(a6)                             ;actor.fire_timer      
+    move.w      #BASE_FIRE_INTERVAL,actor.fire_delay(a6)            ;actor.fire_delay      
+    move.w      #BULLET_TYPE_BASE,actor.fire_type(a6)               ;actor.fire_type       
+    move.l      #0,actor.controller_addr(a6)                        ;actor.controller_addr 
+    rts
+
+; actually spawns the dang player
+; @params: a6 - player actor to spawn
+SpawnPlayer:
+    move.w      #PLAYER_STARTING_POSX,actor.x(a6)                   ;actor.x               
+    move.w      #0,actor.subpixel_x(a6)                             ;actor.subpixel_x      
+    move.w      #PLAYER_STARTING_POSY,actor.y(a6)                   ;actor.y               
+    move.w      #0,actor.subpixel_y(a6)                             ;actor.subpixel_y      
+    move.w      #0,actor.velocity_x(a6)                             ;actor.velocity_x      
+    move.w      #0,actor.velocity_y(a6)                             ;actor.velocity_          
+    move.w      #0,actor.current_frame(a6)                          ;actor.current_frame   
+    move.w      #PLAYER_ANIM_IDLE,actor.current_anim(a6)            ;actor.current_anim
+    move.w      #ACTOR_STATE_ACTIVE,actor.state(a6)                 ;actor.state           
+    move.w      #PLAYER_MOVEMENT_STATE_NORMAL,actor.movement_state(a6);actor.movement_state     
+    move.w      #PLAYER_MAX_ANIM_DELAY,actor.anim_timer(a6)         ;actor.anim_timer      
+    move.w      #PLAYER_INV_STATE_DURATION,actor.inv_timer(a6)      ;actor.inv_timer       
+    move.w      #PLAYER_FLASH_DURATION,actor.flash_timer(a6)        ;actor.flash_timer     
+    move.w      #1,actor.visible(a6)                                ;actor.visible
+    move.w      #0,actor.jump_decel_timer(a6)                       ;actor.jump_decel_timer
+    move.w      #0,actor.fire_timer(a6)                             ;actor.fire_timer
+
+    rts
+
+UpdatePlayers:
     ; update and draw player 1
     lea         joystick1_instance,a4
     lea         pl_instance1,a6
     ;bsr         move_player_with_joystick
     bsr         process_actor_movement
     bsr         updateAnimation
-    bsr         draw_actor
+    bsr         UpdateFireTimer
+    bsr         UpdateRespawnTimer
     ; update and draw player 2
     lea         joystick2_instance,a4
     lea         pl_instance2,a6
@@ -109,7 +132,7 @@ UpdatedPlayers:
     bsr         process_actor_movement
     bsr         updateAnimation
     bsr         UpdateFireTimer
-    bsr         draw_actor
+    bsr         UpdateRespawnTimer
 
     rts
 
@@ -136,6 +159,19 @@ UpdateFireTimer:
     beq         .nothingToDo
     subi        #1,actor.fire_timer(a6)
 .nothingToDo:
+    rts
+
+; check to see if the player is dead, if they are, decrement the timer and respawn the player
+UpdateRespawnTimer:
+    cmpi        #ACTOR_STATE_DEAD,actor.state(a6)
+    bne         .SkipFunction
+    subi        #1,actor.inv_timer(a6)
+    cmpi        #0,actor.inv_timer(a6)
+    beq         .RespawnPlayer
+    bra         .SkipFunction
+.RespawnPlayer
+    bsr         SpawnPlayer
+.SkipFunction
     rts
 
 ; checks all the timers and conditons needed to fire a projectile
@@ -310,9 +346,14 @@ player_screen_scrolled:
 ; @params: d2 - knockback y
 PlayerHit:
     ; check to see if player is able to be hit (in active state)
+    cmpi        #ACTOR_STATE_ACTIVE,actor.state(a4)
+    bne         .SkipFunction
     ; if they are, swap them to the hit state and apply damage/knockback
     move.l      a6,a0
     move.l      a4,a6
     bsr         DespawnActor
+    move.w      #ACTOR_STATE_DEAD,actor.state(a6)
+    move.w      #PLAYER_INV_STATE_DURATION,actor.inv_timer(a6)
     move.l      a0,a6
+.SkipFunction
     rts

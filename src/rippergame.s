@@ -18,6 +18,7 @@ main:
     move.w      #TESTSAMPLE_LEN/2,d0
     move.w      0,d1
     bsr         PlaySampleOnChannel
+    bsr         PlayerControllerStart
     bsr         EnemyManagerStart
     bsr         ProjectileManagerStart
 
@@ -46,7 +47,7 @@ mainloop:
 
     ; run major updates
     bsr         UpdateProjectileManager
-    bsr         UpdatedPlayers
+    bsr         UpdatePlayers
     bsr         UpdateEnemies
 
     ; run drawing updates

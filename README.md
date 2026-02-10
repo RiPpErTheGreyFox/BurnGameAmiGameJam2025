@@ -44,12 +44,27 @@ BIG BLOCK: Come up with level format (needs both graphics and scripts (scroll st
 *Play the most basic sound to make sure the system works
 *BIG BLOCK: Create a pool allocation for the enemies and projectiles to spawn and be managed
 *make players shoot projectiles that kill enemies *(need collision detection written, DONE)
-BIG BLOCK: make enemies touching players kill them *(need collision detection written, DONE)
-add player death and respawning (needs state checking added to all updates and the like)
-
+*BIG BLOCK: make enemies touching players kill them (need collision detection written, DONE)
+*add player death and respawning (needs state checking added to all updates and the like)
 
 Minimum viable product:
 Start screen with basic logo, firefighter moves onto nonscrolling unanimated background, enemies spawn at random intervals, firefighter can attack them, enemies move around at random and can attack randomly, PAL Amiga and possibly overspecced for testing, as long as player can die or clear X number of enemies, MVP is reached, basic sound effects are a bonus
 
 Stretch goals:
 Multiple players, multiple characters, XP system for the run, bosses, minibosses, multiple enemy types, multiple levels, scrolling levels, using copper to draw high-res score/info at the top of the screen, animated level tile sets, weapon pickups, health pickups, pop ups with dialogue, music, sound effects, NTSC support
+
+List of sounds we'll eventually need:
+Player:
+    jump
+    damaged
+    die
+    spawn
+    landing on ground
+    firing
+Enemy:
+    damaged
+    die
+    spawn
+    firing
+Level:
+    Ambient Sound?

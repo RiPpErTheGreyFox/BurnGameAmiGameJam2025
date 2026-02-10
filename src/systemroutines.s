@@ -111,6 +111,8 @@ Ninc2:
 
 ;---------- Collision Functions ----------
 
+; TODO: anything calling this should be using the middle of their entity point and not the top left corner
+; TODO: update this to take from a collision box and not just the sprite
 ; iterates through every live entity and determines if a collision has taken place
 ; @params: a6 - the source entity
 ; @params: d0 - actor.type we're intending to collide with
