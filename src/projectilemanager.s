@@ -3,8 +3,6 @@
               INCLUDE     "hw.i"
 ;---------- Constants ---------
 
-PROJECTILE_DEFAULT_BOBDATA      EQU projectile_gfx
-PROJECTILE_DEFAULT_MASKDATA     EQU projectile_mask
 PROJECTILE_WIDTH                EQU 16
 PROJECTILE_HEIGHT               EQU 16
 PROJECTILE_SPRITESHEET_W        EQU 16

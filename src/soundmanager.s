@@ -67,7 +67,7 @@ StopAllSounds:
     move.w      #$0007,DMACON(a5)              ; turn off all channels
     rts
 
-    SECTION AUDIO, DATA_C
+    SECTION AUDIO,DATA_C
 
     CNOP        0,2                     ; align data in a word boundary
 

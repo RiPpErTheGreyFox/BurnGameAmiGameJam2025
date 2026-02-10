@@ -152,7 +152,7 @@ update_joystick_2:
 checkRightMouseButton:
     ; TODO: this needs to be made more robust
     move.w      #0,d0                   ; clear the return register
-    btst        #10,$dff016             ; check port 1 mouse button, remember that POTGOR is 1 = no input
+    ;btst        #10,$dff016             ; check port 1 mouse button, remember that POTGOR is 1 = no input
     bne.s       .endFunc                ; if not, skip to port 2 mouse button
 
     move.w      #1,d0                   ; otherwise, set return and rts
