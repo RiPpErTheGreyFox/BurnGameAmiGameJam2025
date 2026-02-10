@@ -234,7 +234,7 @@ FindNextFreeEnemy:
 SpawnEnemy:
     bsr         FindNextFreeEnemy
     move.l      a6,d2
-    cmpi        #0,d2
+    cmpi.l      #0,d2
     beq         .spawnFailed
 .spawnSuccess:
     move.w      d0,actor.x(a6)                                          ;actor.x               

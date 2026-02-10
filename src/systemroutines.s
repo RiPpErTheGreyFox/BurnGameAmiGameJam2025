@@ -109,6 +109,90 @@ Ninc2:
     movem.l     (sp)+,d0-a6                                         ; restore registers onto the stack
     rts
 
+;---------- Collision Functions ----------
+
+; iterates through every live entity and determines if a collision has taken place
+; @params: a6 - the source entity
+; @params: d0 - actor.type we're intending to collide with
+; @returns: a4 - first entity found that's been collided with, zero if no collisions
+; @clobbers: d6
+FindEntityCollidedWith:
+    ; jump to the loop we're intending to interact which
+    ; check's the actor type we're looking for
+    cmp         #ACTOR_TYPE_ENEMY,d0
+    beq         .LoadEnemySearch
+    cmp         #ACTOR_TYPE_PLAYER,d0
+    beq         .LoadPlayerSearch
+    cmp         #ACTOR_TYPE_PROJECTILE,d0
+    beq         .LoadProjectileSearch
+    ; load the temp registers with the intended data, then jump the the routine
+.LoadEnemySearch:
+    lea         enemy_array,a4
+    move.w      #ENEMY_MAX_COUNT-1,d6
+    bra         .StartEntitySearch
+.LoadPlayerSearch:
+    ; TODO: we don't have a real player array yet
+    lea         pl_instance1,a4
+    move.w      #1,d6
+    bra         .StartEntitySearch
+.LoadProjectileSearch:
+    lea         projectile_array,a4
+    move.w      #PROJECTILE_MAX_COUNT-1,d6
+    bra         .StartEntitySearch
+
+    ; iterate through every entity of the intended type, checking size bounds 
+    ; semi-universal routine, use d6 as a loop counter, and a4 as the address
+.StartEntitySearch:
+    move.w      actor.x(a6),d0
+    move.w      actor.y(a6),d1
+.loopStart:
+    cmp         #ACTOR_STATE_INACTIVE,actor.state(a4)
+    beq         .loopEnd
+    bsr         IsPointWithinEntity
+    cmp         #1,d2
+    beq         .EntityFound
+.loopEnd:
+    adda        #actor.length,a4
+    dbra        d6,.loopStart
+.EntityNotFound:
+    move.l      #0,a4
+.EntityFound:
+    rts
+
+; takes an X/Y and determines if that's "within" the size of a provided entity
+; doesn't do any active entity checking, it's just a simple "is within" or not
+; active entity and eligibility has to be checked by the calling function
+; @params: a4 - entity to be checked
+; @params: d0.w - x position of the point to check
+; @params: d1.w - y position of the point to check
+; @clobbers: d2,d3
+; @returns: d2 - 1 if true, 0 if false
+IsPointWithinEntity:
+    ; set the flag
+    ; grab, store and add size to the entities position to create "the box"
+    move.w      actor.x(a4),d2
+    move.w      actor.y(a4),d3
+    add         actor.width(a4),d2
+    add         actor.height(a4),d3
+
+    ; first check if x is above minimum, and below maximum
+    cmp         actor.x(a4),d0
+    blt         .checkFailed
+        cmp         d2,d0
+        bgt         .checkFailed
+            ; if so, then check if y is above minimum and below maximum
+            cmp         actor.y(a4),d1
+            blt         .checkFailed
+                cmp         d3,d1
+                bgt         .checkFailed
+                    move.w      #1,d2
+                    rts
+    
+
+.checkFailed
+    move.w      #0,d2
+    rts
+
 ;---------- Interrupt Functions ----------
 
 ; TODO: expand this to allow any channel interrupt to be enabled

@@ -34,17 +34,17 @@ List a things to make the MVP possible:
 *Character on screen
 *Controller moving character
 *Character being affected by gravity
-Enemy *spawning/ moving/ collision with player
-Projectile spawning/moving/collision with player
+*Enemy spawning/moving/collision with player
+*Projectile spawning/moving/collision with player
 /background loading/drawing
 *Sound playing
 
-MVP to-do final week of Jan:
+MVP to-do final week of Jan: (failed, working on this still in Feb)
 BIG BLOCK: Come up with level format (needs both graphics and scripts (scroll stops and enemy spawns))
 *Play the most basic sound to make sure the system works
-BIG BLOCK: Create a pool allocation for the enemies and projectiles to spawn and be managed
-make players shoot projectiles that kill enemies(need collision detection written)
-BIG BLOCK: make enemies touching players kill them (need collision detection written)
+*BIG BLOCK: Create a pool allocation for the enemies and projectiles to spawn and be managed
+*make players shoot projectiles that kill enemies *(need collision detection written, DONE)
+BIG BLOCK: make enemies touching players kill them *(need collision detection written, DONE)
 add player death and respawning (needs state checking added to all updates and the like)
 
 

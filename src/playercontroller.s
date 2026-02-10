@@ -146,7 +146,9 @@ FireProjectile:
     bne         .cantFire                                           ; if anything left in the fire timer, we can't shoot yet
 
     move.w      actor.x(a6),d0
+    addi.w      #16,d0
     move.w      actor.y(a6),d1
+    addi.w      #16,d1
     move.w      #48,d2
     move.w      #0,d3
     move.w      #0,d4

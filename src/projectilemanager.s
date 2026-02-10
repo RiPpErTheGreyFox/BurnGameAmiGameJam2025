@@ -36,14 +36,14 @@ UpdateProjectileManager:
     ; iterate through every projectile being managed
     ; update any that require it
     lea         projectile_array,a6
-    move.w      #PROJECTILE_MAX_COUNT-1,d0
+    move.w      #PROJECTILE_MAX_COUNT-1,d7
 .loopStart:
     cmp         #ACTOR_STATE_INACTIVE,actor.state(a6)
     beq         .loopEnd
     bsr         UpdateProjectile
 .loopEnd:
     adda        #actor.length,a6
-    dbra        d0,.loopStart
+    dbra        d7,.loopStart
 
     movem.l     (sp)+,d0-a6
     rts
@@ -52,23 +52,39 @@ UpdateProjectileManager:
 ; @params: a6 - address of the projectile to be updated
 UpdateProjectile:
     bsr         process_actor_movement
+    ; TODO: testing hitting enemies
+    move.w      #ACTOR_TYPE_ENEMY,d0
+    bsr         FindEntityCollidedWith
+    move.l      a4,d6
+    cmpi        #0,d6
+    bne         .EnemyHit
+    bra         .DespawnCheck
+.EnemyHit:
+    ; save reference to a6 to call despawn
+    move.l      a6,a0
+    move.l      a4,a6
+    bsr         DespawnActor
+    move.l      a0,a6
+    bsr         DespawnActor
+.DespawnCheck:
     ; TODO: remove this and make projectiles detect properly
     cmpi        #300,actor.x(a6)
     bge         DespawnActor
+    ; doesn't push return address to the stack, so anything here is ignored for now
     rts
 
 DrawProjectiles:
     movem.l     d0-a6,-(sp)
     ; iterate through the array and draw them all
     lea         projectile_array,a6
-    move.w      #PROJECTILE_MAX_COUNT-1,d0                               ; off by one
+    move.w      #PROJECTILE_MAX_COUNT-1,d7                               ; off by one
 .loopStart:
     cmpi        #0,actor.visible(a6)
     beq         .loopEnd
     bsr         draw_actor
 .loopEnd:
     adda        #actor.length,a6
-    dbra        d0,.loopStart                                       ; repeat number of times for every projectile
+    dbra        d7,.loopStart                                       ; repeat number of times for every projectile
 
     movem.l     (sp)+,d0-a6
     rts
@@ -149,7 +165,7 @@ FindNextFreeProjectile:
 SpawnProjectile:
     bsr         FindNextFreeProjectile
     move.l      a6,d7
-    cmpi        #0,d7
+    cmpi.l      #0,d7
     beq         .spawnFailed
 .spawnSuccess:
     move.w      d0,actor.x(a6)                                      ;actor.x               
