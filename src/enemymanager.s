@@ -2,7 +2,7 @@
             INCDIR      "include"
             INCLUDE     "hw.i"
 ;---------- Constants ---------
-ENEMY_MAX_COUNT                 equ 5                       ; size of the pool of enemies
+ENEMY_MAX_COUNT                 equ 5                        ; size of the pool of enemies
 
 ENEMY_WIDTH                     equ 32                       ; width in pixels
 ENEMY_WIDTH_B                   equ (ENEMY_WIDTH/8)          ; width in bytes
@@ -244,6 +244,22 @@ FindNextFreeEnemy:
 .actorNotfound:
     move.l      #0,a6
 .actorFound:
+    rts
+
+; iterates through the array and returns the amount of not inactive entities
+; @returns: d7 - number of instances currently not inactive
+; @clobbers: a6,d0
+GetNumberOfEnemiesSpawned:
+    lea         enemy_array,a6
+    move.w      #ENEMY_MAX_COUNT-1,d0
+    move.w      #0,d7
+.loopStart:
+    cmpi        #ACTOR_STATE_INACTIVE,actor.state(a6)
+    beq         .nextInLoop
+    addi        #1,d7
+.nextInLoop:
+    adda        #actor.length,a6
+    dbra        d0,.loopStart
     rts
 
 ; attempts to spawn an enemy with the desired location, will add more stuff later to it, AI needs updating

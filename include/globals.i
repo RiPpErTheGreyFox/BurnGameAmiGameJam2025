@@ -31,7 +31,7 @@ BGND_ROW_SIZE               EQU (BGND_WIDTH/8)
 VIEWPORT_HEIGHT             EQU 192
 VIEWPORT_WIDTH              EQU 320
 SCROLL_SPEED                EQU 2
-SCROLL_THRESHOLD_X_RIGHT    EQU 240
+SCROLL_THRESHOLD_X_RIGHT    EQU 120
 
 ;---------- Variables ---------
 camera_x            dc.w 0*16

@@ -21,40 +21,41 @@ main:
     bsr         PlayerControllerStart
     bsr         EnemyManagerStart
     bsr         ProjectileManagerStart
+    bsr         GameManagerStart
 
     ; DEBUG: spawn some enemies
-    move.w      #254,d0
-    move.w      #ENEMY_STARTING_POSY,d1
-    bsr         SpawnEnemy
-    move.w      #310,d0
-    bsr         SpawnEnemy
-    move.w      #144,d0
-    bsr         SpawnEnemy
-    move.w      #220,d0
-    bsr         SpawnEnemy
-    move.w      #166,d0
-    bsr         SpawnEnemy
-    move.w      #269,d0
-    bsr         SpawnEnemy
+    ;move.w      #254,d0
+    ;move.w      #ENEMY_STARTING_POSY,d1
+    ;bsr         SpawnEnemy
+    ;move.w      #310,d0
+    ;bsr         SpawnEnemy
+    ;move.w      #144,d0
+    ;bsr         SpawnEnemy
+    ;move.w      #220,d0
+    ;bsr         SpawnEnemy
+    ;move.w      #166,d0
+    ;bsr         SpawnEnemy
+    ;move.w      #269,d0
+    ;bsr         SpawnEnemy
 
 mainloop:
     bsr         WaitVBlank
     bsr         SwapBuffers
+    ; run drawing updates
     bsr         UpdateBackground
 
     ; updated controllers
     bsr         JoystickUpdate
 
     ; run major updates
+    bsr         UpdateGameManager
     bsr         UpdateProjectileManager
-    bsr         UpdatePlayers
-    bsr         UpdateEnemies
-
-    ; run drawing updates
-    bsr         DrawPlayers
-    bsr         DrawEnemies
     bsr         DrawProjectiles
-    
+    bsr         UpdatePlayers
+    bsr         DrawPlayers
+    bsr         UpdateEnemies
+    bsr         DrawEnemies
+
 ;    bsr         isConfirmPressed        ; is confirm pressed?
     lea         joystick1_instance,a6
     move.w      joystick.button1(a6),d0
@@ -80,9 +81,10 @@ shutdown:
     INCLUDE         "actorroutines.s"
     INCLUDE         "controllerroutines.s"
     INCLUDE         "drawingroutines.s"
-    INCLUDE         "systemroutines.s"
+    INCLUDE         "enemymanager.s"
+    INCLUDE         "gamemanager.s"
     INCLUDE         "levelhandler.s"
     INCLUDE         "playercontroller.s"
     INCLUDE         "projectilemanager.s"
-    INCLUDE         "enemymanager.s"
     INCLUDE         "soundmanager.s"
+    INCLUDE         "systemroutines.s"

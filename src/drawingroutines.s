@@ -204,7 +204,7 @@ DrawTile:
     ;add.l      #DISPLAY_PLANE_SIZE,a1
     add.l      #BGND_PLANE_SIZE,a1
     dbra       d7,.loop
-    bsr        WaitBlitter
+    ;bsr        WaitBlitter
 
     movem.l    (sp)+,d0-a6                                              ; restore registers values from the stack
     rts
@@ -269,7 +269,7 @@ WaitVLine:
 ; waits for the vertical blank
 WaitVBlank:
     movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
-    move.l      #236,d2
+    move.l      #255,d2
     bsr         WaitVLine
     movem.l     (sp)+,d0-a6                                         ; restore registers onto the stack
     rts
@@ -284,6 +284,9 @@ UpdateBackground:
     ; drawing the background before the scroll check makes it a frame behind
 
 .scroll_check:
+    ; first check if scrolling allowed flag is set
+    cmpi        #1,screen_scroll_allowed
+    bne         .return
     ; check if either player is near the edge, if so scroll screen
     lea         pl_instance1,a6                                     ; grab each player instance and store their data
     cmpi.w      #SCROLL_THRESHOLD_X_RIGHT,actor.x(a6)               ; compared them to the screen scroll threshold
