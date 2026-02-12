@@ -6,5 +6,5 @@
 ;---------- Subroutines -------
     SECTION CODE
 
-gamemanagerstart:
+GameManagerStart:
     rts

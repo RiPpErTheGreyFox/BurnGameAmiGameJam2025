@@ -10,7 +10,7 @@
 ; @params: none
 ; @clobbers: a0, a1, d7
 
-load_palette:
+LoadPalette:
     movem.l     d0-a6,-(sp)                 ; copy registers onto the stack
     lea         palette,a0              ; pointer to palette data in memory
     lea         cop_palette+2,a1        ; pointer to palette data in copperlist
@@ -26,7 +26,7 @@ load_palette:
 ; initalises bitplane pointers
 ; @clobbers: a1, d0, d1
 
-init_bplpointers:
+InitBPLPointers:
     movem.l    d0-a6,-(sp)                                              ; copy registers into the stack
 
     move.l     #dbuffer1,d0                                             ; address of image in d0
@@ -46,7 +46,7 @@ init_bplpointers:
 
 ; waits for the blitter to finish
 ; @clobbers a5
-wait_blitter:
+WaitBlitter:
 .loop:
     btst.b      #6,DMACONR(a5)          ; if bit 6 is 1, the blitter is busy
     bne         .loop                   ; and then wait until it's zero
@@ -65,7 +65,7 @@ wait_blitter:
 ; @params: d5.w - spritesheet row of the bob
 ; @params: a3.w - spritesheet width
 ; @params: a4.w - spritesheet height
-draw_bob:
+DrawBOb:
     movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
 
     ; calculate the destination address (D channel)
@@ -123,7 +123,7 @@ draw_bob:
     mulu        d0,d2                                               ; multiplies by the height
 
     ; inits the registers that remain constant
-    bsr         wait_blitter
+    bsr         WaitBlitter
     move.w      #$ffff,BLTAFWM(a5)                                  ; first word of channel A: no mask
     move.w      #$0000,BLTALWM(a5)                                  ; last word of channel A: reset all bits
     move.w      d6,BLTCON1(a5)                                      ; shift value for channel A
@@ -136,7 +136,7 @@ draw_bob:
 
     ; copy cycle for each bitplane
 .plane_loop:
-    bsr         wait_blitter
+    bsr         WaitBlitter
     move.l      a1,BLTAPT(a5)                                       ; Channel A: bob's mask
     move.l      a0,BLTBPT(a5)                                       ; Channel B: bob's image
     move.l      a2,BLTCPT(a5)                                       ; Channel C: draw buffer
@@ -155,7 +155,7 @@ draw_bob:
 ; @params: d2.w - x position of the screen where the tile will be drawn
 ; @params: d3.w - y position of the screen where the tile will be drawn
 ; @params: a1 - address of draw surface
-draw_tile:
+DrawTile:
     movem.l    d0-a6,-(sp)                                              ; copy registers into the stack
 
 ; calculates the destination address where to draw the tile
@@ -187,7 +187,7 @@ draw_tile:
 
     moveq      #N_PLANES-1,d7
     
-    bsr        wait_blitter
+    bsr        WaitBlitter
     move.w     #$ffff,BLTAFWM(a5)                                       ; don't use mask
     move.w     #$ffff,BLTALWM(a5)
     move.w     #$09f0,BLTCON0(a5)                                       ; enable channels A,D
@@ -196,7 +196,7 @@ draw_tile:
     move.w     #(TILESET_WIDTH-TILE_WIDTH)/8,BLTAMOD(a5)                ; A channel modulus
     move.w     #(BGND_WIDTH-TILE_WIDTH)/8,BLTDMOD(a5)                   ; D channel modulus
 .loop:
-    bsr        wait_blitter
+    bsr        WaitBlitter
     move.l     a0,BLTAPT(a5)                                            ; source address
     move.l     a1,BLTDPT(a5)                                            ; destination address
     move.w     #64*16+1,BLTSIZE(a5)                                     ; blit size: 16 rows for 1 word
@@ -204,7 +204,7 @@ draw_tile:
     ;add.l      #DISPLAY_PLANE_SIZE,a1
     add.l      #BGND_PLANE_SIZE,a1
     dbra       d7,.loop
-    bsr        wait_blitter
+    bsr        WaitBlitter
 
     movem.l    (sp)+,d0-a6                                              ; restore registers values from the stack
     rts
@@ -212,7 +212,7 @@ draw_tile:
 ; draw the background, copying it from background_surface via Blitter.
 ; @params: d0.w - x position of the part of background
 ; @params: a1 - buffer where to draw
-draw_background:
+DrawBackground:
     movem.l    d0-a6,-(sp)
 
     moveq      #N_PLANES-1,d7
@@ -229,7 +229,7 @@ draw_background:
     lsl.w      #4,d3
     or.w       #$09f0,d3                                                ; inserts the 4 bits into the value to be assigned to BLTCON0
 .planeloop:
-    bsr        wait_blitter
+    bsr        WaitBlitter
     move.l     a0,BLTAPT(a5)                                            ; channel A points to background surface
     move.l     a1,BLTDPT(a5)                                            ; channel D points to draw buffer
     move.w     #$ffff,BLTAFWM(a5)                                       ; no first word mask
@@ -252,7 +252,7 @@ draw_background:
 
 ; waits for the drawing beam to reach a given line
 ; @params: d2.l - line
-wait_vline:
+WaitVLine:
     movem.l     d0-a6,-(sp)                 ; copy registers onto the stack
 
     lsl.l       #8,d2
@@ -267,20 +267,20 @@ wait_vline:
     rts
 
 ; waits for the vertical blank
-wait_vblank:
+WaitVBlank:
     movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
     move.l      #236,d2
-    bsr         wait_vline
+    bsr         WaitVLine
     movem.l     (sp)+,d0-a6                                         ; restore registers onto the stack
     rts
 
 ; draws and scrolls the background to the right if either of the players are past the scroll threshold
-update_background:
+UpdateBackground:
     movem.l     d0-a6,-(sp)
 
     move.w      bgnd_x,d0                                            ; x position of the part of background to draw
     move.l      draw_buffer,a1                                       ; buffer where to draw                                                  
-    bsr         draw_background
+    bsr         DrawBackground
     ; drawing the background before the scroll check makes it a frame behind
 
 .scroll_check:
@@ -296,7 +296,7 @@ update_background:
     ; call the screen_scrolled functions on all actors to make sure they shift correctly, just report how the "camera" moved
     move.w      #SCROLL_SPEED,d0
     move.w      0,d1
-    bsr         player_screen_scrolled
+    bsr         PlayerScreenScrolled
     bsr         EnemyScreenScrolled
 .end_of_scroll_check:
 
@@ -317,12 +317,12 @@ update_background:
     move.w      bgnd_x,d2                                            ; x position = bgnd_x - 16
     sub.w       #16,d2
     lea         bgnd_surface,a1
-    bsr         draw_tile_column                                     ; draws the column to the left of the viewport
+    bsr         DrawTileColumn                                     ; draws the column to the left of the viewport
 
     move.w      bgnd_x,d2                                            ; x position = bgnd_x + VIEWPORT_WIDTH
     add.w       #VIEWPORT_WIDTH,d2 
     lea         bgnd_surface,a1
-    bsr         draw_tile_column                                     ; draws the column to the right of the viewport
+    bsr         DrawTileColumn                                     ; draws the column to the right of the viewport
 .check_bgnd_end:
     cmp.w       #16+VIEWPORT_WIDTH,bgnd_x                            ; end of background surface?
     ble         .incr_x
@@ -336,7 +336,7 @@ update_background:
     rts
 
 ; swaps video buffers, causing draw_buffer to be displayed
-swap_buffers:
+SwapBuffers:
     movem.l    d0-a6,-(sp)                                              ; copy registers into the stack
 
     move.l     draw_buffer,d0                                           ; swaps the values ​​of draw_buffer and view_buffer

@@ -49,7 +49,7 @@ UpdateProjectileManager:
 ; runs all logic for the projectile actors
 ; @params: a6 - address of the projectile to be updated
 UpdateProjectile:
-    bsr         process_actor_movement
+    bsr         ProcessActorMovement
     ; TODO: testing hitting enemies
     move.w      #ACTOR_TYPE_ENEMY,d0
     bsr         FindEntityCollidedWith
@@ -78,7 +78,7 @@ DrawProjectiles:
 .loopStart:
     cmpi        #0,actor.visible(a6)
     beq         .loopEnd
-    bsr         draw_actor
+    bsr         DrawActor
 .loopEnd:
     adda        #actor.length,a6
     dbra        d7,.loopStart                                       ; repeat number of times for every projectile

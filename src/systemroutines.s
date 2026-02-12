@@ -6,7 +6,7 @@
 
 ; takes full control of the system, saving it's state to be restored on program exit
 
-take_system:
+TakeSystem:
     move.l      $4,a6
     jsr         Disable(a6)                                         ; stop multitasking
     lea         gfx_name,a1                                               
@@ -20,7 +20,7 @@ take_system:
     move.w      INTENAR(a5),old_intena                              ; store the old interrupt enable
 
     move.l      #$7FFF7FFF,INTENA(a5)                               ; disable system interrupts
-    bsr         wait_vblank                                         ; wait for a vblank
+    bsr         WaitVBlank                                         ; wait for a vblank
 
     ; program the interrupt vectors
 
@@ -41,14 +41,14 @@ take_system:
 
 ; releases full control of the system, restarting EXEC after resetting the state
 
-release_system:
+ReleaseSystem:
 
     lea         CUSTOM,a5
     move.l      old_cop,COP1LC(a5)                                  ; set the system copperlist
     move.w      d0,COPJMP1(a5)                                      ; start the system copperlist
 
     move.w      #$7fff,INTENA(a5)                                   ; disable interrupts
-    bsr         wait_vblank                                         ; wait a frame
+    bsr         WaitVBlank                                         ; wait a frame
 
     move.l      old_interrupt_ptr,$70.w                             ; restore original interrupt pointer
     move.w      #$7fff,INTREQ(a5)                                   ; clear requests
@@ -65,8 +65,9 @@ release_system:
     jsr         CloseLibrary(a6)                                    ; close graphics.library
     rts
 
-;   waits 3 scanlines to allow for DMA to start when needed
-wait_ciab_ta:
+; waits 3 scanlines to allow for DMA to start when needed
+; wait CIA B Timer A
+WaitCIABTA:
     movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
     lea         $BFD000,a4
     move.b      $e00(a4),d0
@@ -202,7 +203,7 @@ IsPointWithinEntity:
 
 ; TODO: expand this to allow any channel interrupt to be enabled
 EnableAudioChannel0Interrupt:
-    bsr         wait_ciab_ta
+    bsr         WaitCIABTA
     move.l      #InterruptHandlerFunction,$70.w                     ; set the pointer to which function the level 4 interrupt needs
 
     move.w      #INTENABLEMASK,INTENA(a5)                           ; set the INTENA bits

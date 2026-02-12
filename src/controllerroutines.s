@@ -19,11 +19,11 @@ joystick2_instance      dc.w 0,0,0,0,0,0
 ;---------- Subroutines -------
     SECTION CODE
 
-controllerroutinesstart:
+ControllerManagerStart:
 ; Checks if left mouse button, joystick button or keyboard enter is pressed
 ; @clobbers a0, a1, d1
 ; @returns d0: 1 if any confirm buttons are pressed
-isConfirmPressed:
+IsConfirmPressed:
     move.w      #0,d0                   ; clear the return register
 .checkMouseButton:
     btst        #6,CIAAPRA              ; left mouse button pressed?
@@ -43,18 +43,18 @@ isConfirmPressed:
     rts
 
 ; Updates both joysticks and their respective registers
-joystick_update:
+JoystickUpdate:
     movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
 
     ; make sure we have the custom chip address in at
     lea         CUSTOM,a5
-    bsr         update_joystick_1 ;EXPECTING MOUSE TODO: FIX
-    bsr         update_joystick_2 ;EXPECTING JOYSTICK TODO: FIX
+    bsr         UpdateJoystick1 ;EXPECTING MOUSE TODO: FIX
+    bsr         UpdateJoystick2 ;EXPECTING JOYSTICK TODO: FIX
 
     movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
     rts
 
-update_joystick_1:
+UpdateJoystick1:
 
     ; grab the address of the first joystick
     lea         joystick1_instance,a6
@@ -99,7 +99,7 @@ update_joystick_1:
 
     rts
 
-update_joystick_2:
+UpdateJoystick2:
 
     ; grab the address of the first joystick
     lea         joystick2_instance,a6
@@ -149,7 +149,7 @@ update_joystick_2:
 ; Checks if right mouse button/joystick button 2 is pressed
 ; @clobbers a0, a1, d1
 ; @returns d0: 1 if any right mouse button is pressed
-checkRightMouseButton:
+CheckRightMouseButton:
     ; TODO: this needs to be made more robust
     move.w      #0,d0                   ; clear the return register
     ;btst        #10,$dff016             ; check port 1 mouse button, remember that POTGOR is 1 = no input

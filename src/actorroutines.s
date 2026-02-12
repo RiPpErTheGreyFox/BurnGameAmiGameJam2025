@@ -57,7 +57,7 @@ actor.length            rs.b        0
 
 ; draws the actor using their current data
 ; @params: a6 - address of the player instance to draw
-draw_actor:
+DrawActor:
     movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
 
     tst.w       actor.visible(a6)                                   ; actor is visible?
@@ -74,7 +74,7 @@ draw_actor:
     move.w      actor.spritesheetwidth(a6),a3                       ; spritesheet width
     move.w      actor.spritesheetheight(a6),a4                      ; spritesheet height
 
-    bsr         draw_bob
+    bsr         DrawBOb
 .return:
     movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
     rts
@@ -83,7 +83,7 @@ draw_actor:
 ; @params: d0 - new x position of actor
 ; @params: d1 - new y position of actor
 ; @params: a6 - address of the actor instance to update
-set_actor_position:
+SetActorPosition:
     movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
 
     move.w      d0,actor.x(a6)
@@ -96,7 +96,7 @@ set_actor_position:
 
 ; applies the current velocities to the actor position
 ; @params: a6 - address of the actor instance to update
-process_actor_movement:
+ProcessActorMovement:
     movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
 
     move.w      actor.x(a6),d0                                      ; d0 = x
@@ -106,11 +106,11 @@ process_actor_movement:
     move.w      actor.velocity_x(a6),d4                             ; d4 = velocity_x
     move.w      actor.velocity_y(a6),d5                             ; d5 = velocity_y
 
-    bsr         update_jump_velocity
-    bsr         apply_velocities
+    bsr         UpdateJumpVelocity
+    bsr         ApplyVelocities
     cmpi        #1,actor.respectsBounds(a6)
     bne         .EndOfFunc
-    bsr         bounds_check
+    bsr         BoundsCheck
     
 .EndOfFunc:
     ; apply all the updates
@@ -124,7 +124,7 @@ process_actor_movement:
     rts
 
 ; @params: a6 - address of the current actor instance to update
-update_jump_velocity:
+UpdateJumpVelocity:
     ; first see if actor even respects gravity, if not, then just skip the function
     cmpi        #1,actor.gravity(a6)
     bne         .endFunc
@@ -166,7 +166,7 @@ update_jump_velocity:
     ; collision check with temp register, increase it by 1 to check a pixel below us
     move        d1,d6                                               ; store Y position in a temp register
     addi        #1,d1
-    jsr         collision_check_at_point                            ; call the function
+    jsr         CollisionCheckAtPoint                               ; call the function
     move        d6,d1                                               ; restore Y position from temp register
     btst        #0,d7
     beq         .falseResult
@@ -181,7 +181,7 @@ update_jump_velocity:
     rts
 
 ; to be called only from the process movement function
-apply_velocities:
+ApplyVelocities:
 .checkXVelocity:
     ; check if velocity isn't zero
     tst         d4
@@ -260,7 +260,7 @@ apply_velocities:
     rts
 
 ; to be called only from the process movement function
-bounds_check:
+BoundsCheck:
     move.w      #SCREEN_BOUNDARY_MAX_X,d7
     sub.w       actor.width(a6),d7
     cmp         d7,d0
@@ -303,7 +303,7 @@ bounds_check:
 ; does all the animation updating for a player
 ; TODO: Do frame swapping with lookup tables and the like
 ; @params: a6 - address of the player instance to update
-updateAnimation:
+UpdateAnimation:
     ; check for animation swap
     move.w      actor.velocity_x(a6),d4                             ; d4 = velocity_x
     move.w      actor.current_frame(a6),d6                          ; d6 = current anim frame

@@ -9,13 +9,13 @@ tilemap     include "assets/gfx/rtype_tilemap.i"
 
 ;---------- Subroutines -------
 
-levelhandlerstart:
+LevelHandlerStart:
     rts
 
 ; Draw a column of 12 tiles.
 ; @params: d0.w - map column
 ; @params: d2.w - x position (multiple of 16)
-draw_tile_column: 
+DrawTileColumn: 
     movem.l    d0-a6,-(sp)
         
 ; calculates the tilemap address from which to read the tile index
@@ -28,7 +28,7 @@ draw_tile_column:
     move.w     #0,d3                                                    ; y position
 .loop:
     move.w     (a0),d0                                                  ; tile index
-    bsr        draw_tile
+    bsr        DrawTile
          
     add.w      #TILE_HEIGHT,d3                                          ; increment y position
     add.l      #TILEMAP_ROW_SIZE,a0                                     ; move to the next row of the tilemap
@@ -39,7 +39,7 @@ draw_tile_column:
 
 ; Initialises the background, copying the initial part of the level map
 ; @params: d0.w - map column from which to start drawing tiles
-init_background:
+InitBackground:
     movem.l    d0-a6,-(sp)
 
 ; initializes the part that will be visible in the display window
@@ -47,7 +47,7 @@ init_background:
     moveq      #20-1,d7
     move.w     #16,d2                                                   ; position x
 .loop         
-    bsr        draw_tile_column
+    bsr        DrawTileColumn
     add.w      #1,d0                                                    ; increment map column
     add.w      #1,map_ptr
     add.w      #16,d2                                                   ; increase position x
@@ -58,12 +58,12 @@ init_background:
     add.w      #1,map_ptr
     move.w     #0,d2                                                    ; x position
     lea        bgnd_surface,a1
-    bsr        draw_tile_column
+    bsr        DrawTileColumn
 
 ; draws the column to the right of the display window
     move.w     #DISPLAY_WIDTH+16,d2                                     ; x position
     lea        bgnd_surface,a1
-    bsr        draw_tile_column
+    bsr        DrawTileColumn
 
     movem.l    (sp)+,d0-a6
     rts    
@@ -71,12 +71,13 @@ init_background:
 ; fills the screen with tiles
 ; @params: d0.w - map column from which to start drawing tiles
 ; @params: a1 - address of draw surface
-fill_screen_with_tiles:
+FillScreenWithTiles:
     movem.l    d0-a6,-(sp)
 
     moveq      #20-1,d7
     move.w     #0,d2                                                    ; position x
-.loop         bsr        draw_tile_column
+.loop         
+    bsr        DrawTileColumn
     add.w      #1,d0                                                    ; increment map column
     add.w      #16,d2                                                   ; increase position x
     dbra       d7,.loop
@@ -91,7 +92,7 @@ fill_screen_with_tiles:
 ; @params: d4.w - X Velocity
 ; @params: d5.w - Y Velocity
 ; @returns: d7 - 1 if true
-collision_check_at_point:
+CollisionCheckAtPoint:
     ; TODO: use a lookup table for collidable tile types
     ; TODO: handle scrolling of the map
     ; for now just return true if position Y is at a certain point

@@ -13,10 +13,10 @@
 ; channel 1 & 2 right side
 ; volume is between 1-64
 ; minimum period is 123 - PAL, 124 - NTSC
-soundmanagerstart:
+SoundManagerStart:
     rts
 
-enableallchannels:
+EnableAllChannels:
     move.w      #$8001,DMACON           ; enable channel 0
     move.w      #$8008,DMACON           ; enable channel 3
     move.w      #$8003,DMACON           ; enable channel 0 and 1

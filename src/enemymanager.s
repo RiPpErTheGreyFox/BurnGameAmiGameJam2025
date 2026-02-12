@@ -58,8 +58,8 @@ UpdateEnemies:
     beq         .loopEnd
     bsr         ProcessEnemyAI
     bsr         CheckEnemyPlayerCollision
-    bsr         process_actor_movement
-    bsr         updateAnimation
+    bsr         ProcessActorMovement
+    bsr         UpdateAnimation
 .loopEnd:
     adda        #actor.length,a6
     dbra        d0,.loopStart                                       ; repeat number of times for every projectile
@@ -75,7 +75,7 @@ DrawEnemies:
 .loopStart:
     cmpi        #0,actor.visible(a6)
     beq         .loopEnd
-    bsr         draw_actor
+    bsr         DrawActor
 .loopEnd:
     adda        #actor.length,a6
     dbra        d0,.loopStart                                       ; repeat number of times for every projectile
@@ -95,11 +95,11 @@ ProcessEnemyAI:
 .respawnEnemy
     move.w      #SCREEN_BOUNDARY_MAX_X-ENEMY_WIDTH,d0
     move.w      #ENEMY_STARTING_POSY,d1
-    bsr         set_actor_position
+    bsr         SetActorPosition
 
 .keepgoingleft:
     ; if so, respawn, otherwise keep going left
-    ; using a variant of adjustXVelocity
+    ; using a variant of AdjustXVelocity
     move.w      #-1,d0
     bsr         AdjustXVelocityEnemy
 

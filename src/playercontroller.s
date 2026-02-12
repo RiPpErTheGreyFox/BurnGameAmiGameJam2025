@@ -121,16 +121,16 @@ UpdatePlayers:
     lea         joystick1_instance,a4
     lea         pl_instance1,a6
     ;bsr         move_player_with_joystick
-    bsr         process_actor_movement
-    bsr         updateAnimation
+    bsr         ProcessActorMovement
+    bsr         UpdateAnimation
     bsr         UpdateFireTimer
     bsr         UpdateRespawnTimer
     ; update and draw player 2
     lea         joystick2_instance,a4
     lea         pl_instance2,a6
-    bsr         move_player_with_joystick
-    bsr         process_actor_movement
-    bsr         updateAnimation
+    bsr         MovePlayerWithJoystick
+    bsr         ProcessActorMovement
+    bsr         UpdateAnimation
     bsr         UpdateFireTimer
     bsr         UpdateRespawnTimer
 
@@ -142,12 +142,12 @@ DrawPlayers:
     lea         pl_instance1,a6
     cmpi        #1,actor.visible(a6)
     bne         .DrawPlayer2
-    bsr         draw_actor
+    bsr         DrawActor
 .DrawPlayer2:
     lea         pl_instance2,a6
     cmpi        #1,actor.visible(a6)
     bne         .EndOffunc
-    bsr         draw_actor
+    bsr         DrawActor
 .EndOffunc
     movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
     rts
@@ -204,7 +204,7 @@ FireProjectile:
 ; moves the player according to the directions of the joystick
 ; @params: a4 - address of the joystick instance to update
 ; @params: a6 - address of the player instance to update
-move_player_with_joystick:
+MovePlayerWithJoystick:
     movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
 
     ; move player stats into data registers
@@ -222,7 +222,7 @@ move_player_with_joystick:
     move.w      joystick.up(a4),d6
     btst        #0,d6
     beq         .no_up
-    bsr         player_jump
+    bsr         PlayerJump
 .no_up:
     move.w      joystick.down(a4),d6
     btst        #0,d6
@@ -241,7 +241,7 @@ move_player_with_joystick:
 .end_joystick_check:
     ; run the velocity updates
     ; left and right handled by adjust X Velocity function
-    bsr         adjustXVelocityPlayer
+    bsr         AdjustXVelocityPlayer
     ; save the velocities
     move.w      d4,actor.velocity_x(a6)
     move.w      d5,actor.velocity_y(a6) 
@@ -254,7 +254,7 @@ move_player_with_joystick:
 ; checks for valid states before doing so
 ; @params: a4 - address of the joystick instance to check
 ; @params: a6 - address of the player instance to update
-player_jump:
+PlayerJump:
     ; check if player is airborne
     cmp         #PLAYER_MOVEMENT_STATE_AIRBORNE,actor.movement_state(a6)
     beq         .SkipJump
@@ -278,7 +278,7 @@ player_jump:
 ; @params: a4 - address of the joystick instance to update
 ; @params: a6 - address of the player instance to update
 ; @clobbers: d4,d5,d6
-adjustXVelocityPlayer:
+AdjustXVelocityPlayer:
     move.w      actor.velocity_x(a6),d4                            ; d4 = velocity_x
     ; check if the player is allowed to make inputs, otherwise assume no input
     cmpi        #ACTOR_STATE_ACTIVE,actor.state(a6)
@@ -323,7 +323,7 @@ adjustXVelocityPlayer:
 ; function called whenever the worldspace screen is scrolled, used to anchor actors in the same plane
 ; @params: d0.w - X amount of screen scrolled, before negation
 ; @params: d1.w - Y amount of screen scrolled, before negation
-player_screen_scrolled:
+PlayerScreenScrolled:
     movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
     
     neg         d0                                                  ; make the actor movement opposite of camera movement

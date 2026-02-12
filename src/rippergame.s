@@ -10,7 +10,7 @@ main:
     move.w      camera_x,d0
     lsr.w       #4,d0
     move.w      d0,map_ptr
-    bsr         init_background
+    bsr         InitBackground
     move.w      #16,bgnd_x
 
     ; play the test sound to make sure these functions are working
@@ -38,12 +38,12 @@ main:
     bsr         SpawnEnemy
 
 mainloop:
-    bsr         wait_vblank
-    bsr         swap_buffers
-    bsr         update_background
+    bsr         WaitVBlank
+    bsr         SwapBuffers
+    bsr         UpdateBackground
 
     ; updated controllers
-    bsr         joystick_update
+    bsr         JoystickUpdate
 
     ; run major updates
     bsr         UpdateProjectileManager
@@ -68,13 +68,13 @@ mainloop:
     rts
 
 init:
-    bsr         take_system
-    bsr         load_palette
-    bsr         init_bplpointers
+    bsr         TakeSystem
+    bsr         LoadPalette
+    bsr         InitBPLPointers
     rts
     
 shutdown:
-    bsr         release_system
+    bsr         ReleaseSystem
     rts
 
     INCLUDE         "actorroutines.s"
