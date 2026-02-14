@@ -5,7 +5,7 @@
               
     SECTION CODE
 
-tilemap     include "assets/gfx/rtype_tilemap.i"
+tilemap     include "assets/gfx/DemoLevel1.txm"
 
 ;---------- Subroutines -------
 

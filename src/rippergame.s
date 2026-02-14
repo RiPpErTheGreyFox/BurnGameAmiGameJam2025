@@ -23,21 +23,6 @@ main:
     bsr         ProjectileManagerStart
     bsr         GameManagerStart
 
-    ; DEBUG: spawn some enemies
-    ;move.w      #254,d0
-    ;move.w      #ENEMY_STARTING_POSY,d1
-    ;bsr         SpawnEnemy
-    ;move.w      #310,d0
-    ;bsr         SpawnEnemy
-    ;move.w      #144,d0
-    ;bsr         SpawnEnemy
-    ;move.w      #220,d0
-    ;bsr         SpawnEnemy
-    ;move.w      #166,d0
-    ;bsr         SpawnEnemy
-    ;move.w      #269,d0
-    ;bsr         SpawnEnemy
-
 mainloop:
     bsr         WaitVBlank
     bsr         SwapBuffers

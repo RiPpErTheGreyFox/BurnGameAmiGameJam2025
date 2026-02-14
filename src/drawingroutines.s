@@ -269,7 +269,7 @@ WaitVLine:
 ; waits for the vertical blank
 WaitVBlank:
     movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
-    move.l      #255,d2
+    move.l      #304,d2
     bsr         WaitVLine
     movem.l     (sp)+,d0-a6                                         ; restore registers onto the stack
     rts
@@ -370,7 +370,7 @@ bgnd_surface  ds.b       (BGND_PLANE_SIZE*N_PLANES)                             
 
     SECTION graphics_data,DATA_C            ; segment loaded in CHIP RAM
 
-tileset         incbin "assets/gfx/test_tileset.raw"
+tileset         incbin "assets/gfx/DemoLevel1_tileset.raw"
 palette         incbin "assets/gfx/testsprite.pal"
 
 player_gfx      incbin "assets/gfx/testsprite.raw"                      ; ship spritesheet 96x96, 3cols x 3rows, frame size: 32x32

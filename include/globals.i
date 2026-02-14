@@ -5,7 +5,7 @@ GLOBALS_I      SET	1
 
 ;---------- Constants ---------
                                 ;5432109876543210
-DMASET                      EQU %1000001111000000     ; enable only copper, bitplane and blitter DMA
+DMASET                      EQU %1000011111000000     ; enable only copper, bitplane and blitter DMA
 INTENABLEMASK               EQU %1100000010000000
 NUM_COLORS                  EQU 16
 N_PLANES                    EQU 4
@@ -16,11 +16,11 @@ DISPLAY_ROW_SIZE            EQU (DISPLAY_WIDTH/8)
 IMAGE_WIDTH                 EQU 32
 IMAGE_HEIGHT                EQU 32
 IMAGE_PLANE_SIZE            EQU IMAGE_HEIGHT*(IMAGE_WIDTH/8)
-TILESET_WIDTH               EQU 320
-TILESET_HEIGHT              EQU 304
+TILESET_WIDTH               EQU 48
+TILESET_HEIGHT              EQU 16
 TILESET_ROW_SIZE            EQU (TILESET_WIDTH/8)
 TILESET_PLANE_SIZE          EQU (TILESET_HEIGHT*TILESET_ROW_SIZE)
-TILESET_COLS                EQU 20
+TILESET_COLS                EQU 3
 TILEMAP_ROW_SIZE            EQU 268*2
 TILE_WIDTH                  EQU 16
 TILE_HEIGHT                 EQU 16
