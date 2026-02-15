@@ -77,8 +77,16 @@ DrawProjectiles:
     move.w      #PROJECTILE_MAX_COUNT-1,d7                               ; off by one
 .loopStart:
     cmpi        #0,actor.visible(a6)
-    beq         .loopEnd
-    bsr         DrawActor
+    beq         .hideProjectile
+    move.l      actor.sprite_addr(a6),a1
+    move.w      actor.y(a6),d0
+    move.w      actor.x(a6),d1
+    move.w      #PROJECTILE_HEIGHT,d2
+    bsr         SetSpritePosition
+    bra         .loopEnd
+.hideProjectile
+    move.l      actor.sprite_addr(a6),a1
+    bsr         HideSprite
 .loopEnd:
     adda        #actor.length,a6
     dbra        d7,.loopStart                                       ; repeat number of times for every projectile
@@ -92,10 +100,13 @@ CollisionProjectileCheck:
 InitialiseProjectilePool:
     ; iterate through the array and set everything up
     lea         projectile_array,a6
+    lea         projectile1_spr,a1
     move.w      #PROJECTILE_MAX_COUNT-1,d0                          ; off by one
 .loop:
     bsr         InitialiseProjectile
+    move.l      a1,actor.sprite_addr(a6)
     adda        #actor.length,a6
+    adda        #$48,a1                                             ; next sprite pointer
     dbra        d0,.loop                                            ; repeat number of times for every projectile
 
     rts
@@ -110,13 +121,15 @@ InitialiseProjectile:
     move.w      #0,actor.subpixel_y(a6)                             ;actor.subpixel_y      
     move.w      #0,actor.velocity_x(a6)                             ;actor.velocity_x      
     move.w      #0,actor.velocity_y(a6)                             ;actor.velocity_y      
-    move.l      #projectile_gfx,actor.bobdata(a6)                   ;actor.bobdata         
-    move.l      #projectile_mask,actor.mask(a6)                     ;actor.mask            
+    move.l      #0,actor.bobdata(a6)                                ;actor.bobdata         
+    move.l      #0,actor.mask(a6)                                   ;actor.mask            
     move.w      #0,actor.current_frame(a6)                          ;actor.current_frame   
     move.w      #0,actor.current_anim(a6)                           ;actor.current_anim    
     move.w      #1,actor.respectsBounds(a6)                         ;actor.respectsBounds  
     move.w      #PROJECTILE_WIDTH,actor.width(a6)                   ;actor.width           
-    move.w      #PROJECTILE_HEIGHT,actor.height(a6)                 ;actor.height          
+    move.w      #PROJECTILE_HEIGHT,actor.height(a6)                 ;actor.height         
+    move.w      #0,actor.x_middle(a6)                               ;actor.x_middle
+    move.w      #0,actor.y_middle(a6)                               ;actor.y_middle
     move.w      #PROJECTILE_SPRITESHEET_W,actor.spritesheetwidth(a6);actor.spritesheetwidth
     move.w      #PROJECTILE_SPRITESHEET_H,actor.spritesheetheight(a6);actor.spritesheetheight
     move.w      #ACTOR_STATE_INACTIVE,actor.state(a6)               ;actor.state           
@@ -133,6 +146,7 @@ InitialiseProjectile:
     move.w      #0,actor.fire_delay(a6)                             ;actor.fire_delay      
     move.w      #0,actor.fire_type(a6)                              ;actor.fire_type       
     move.l      #0,actor.controller_addr(a6)                        ;actor.controller_addr 
+    move.l      #0,actor.sprite_addr(a6)                            ;sprite_addr 
 
     rts
 
@@ -166,20 +180,28 @@ SpawnProjectile:
     cmpi.l      #0,d7
     beq         .spawnFailed
 .spawnSuccess:
-    move.w      d0,actor.x(a6)                                      ;actor.x               
-    move.w      #0,actor.subpixel_x(a6)                              ;actor.subpixel_x      
-    move.w      d1,actor.y(a6)                                      ;actor.y               
-    move.w      #0,actor.subpixel_y(a6)                              ;actor.subpixel_y      
-    move.w      d2,actor.velocity_x(a6)                              ;actor.velocity_x      
-    move.w      d3,actor.velocity_y(a6)                              ;actor.velocity_y      
-    move.w      #0,actor.current_frame(a6)                           ;actor.current_frame   
-    move.w      #0,actor.current_anim(a6)             ;actor.current_anim
-    move.w      #ACTOR_STATE_ACTIVE,actor.state(a6)                 ;actor.state           
-    move.w      #ENEMY_MOVEMENT_STATE_NORMAL,actor.movement_state(a6);actor.movement_state   
-    move.w      #ENEMY_MAX_ANIM_DELAY,actor.anim_timer(a6)          ;actor.anim_timer     
-    move.w      #1,actor.visible(a6)                                ;actor.visible         
-    move.w      #0,actor.jump_decel_timer(a6)                        ;actor.jump_decel_timer
-    move.w      #0,actor.fire_timer(a6)                              ;actor.fire_timer
-    move.w      d4,actor.fire_type(a6)                               ;actor.fire_type       
-.spawnFailed:
+    move.w      d0,actor.x(a6)                                          ;actor.x               
+    move.w      #0,actor.subpixel_x(a6)                                 ;actor.subpixel_x      
+    move.w      d1,actor.y(a6)                                          ;actor.y               
+    move.w      #0,actor.subpixel_y(a6)                                 ;actor.subpixel_y      
+    move.w      d2,actor.velocity_x(a6)                                 ;actor.velocity_x      
+    move.w      d3,actor.velocity_y(a6)                                 ;actor.velocity_y      
+    move.w      #0,actor.current_frame(a6)                              ;actor.current_frame   
+    move.w      #0,actor.current_anim(a6)                               ;actor.current_anim
+    move.w      actor.width(a6),d2
+    move.w      actor.height(a6),d3
+    lsr.w       d2                                                      ; divide width and height by 2
+    lsr.w       d3
+    add.w       d2,d0
+    add.w       d3,d1
+    move.w      d0,actor.x_middle(a6)                                   ;actor.x_middle
+    move.w      d1,actor.y_middle(a6)                                   ;actor.y_middle
+    move.w      #ACTOR_STATE_ACTIVE,actor.state(a6)                     ;actor.state           
+    move.w      #ENEMY_MOVEMENT_STATE_NORMAL,actor.movement_state(a6)   ;actor.movement_state   
+    move.w      #ENEMY_MAX_ANIM_DELAY,actor.anim_timer(a6)              ;actor.anim_timer     
+    move.w      #1,actor.visible(a6)                                    ;actor.visible         
+    move.w      #0,actor.jump_decel_timer(a6)                           ;actor.jump_decel_timer
+    move.w      #0,actor.fire_timer(a6)                                 ;actor.fire_timer
+    move.w      d4,actor.fire_type(a6)                                  ;actor.fire_type       
+.spawnFailed:   
     rts

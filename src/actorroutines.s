@@ -19,7 +19,7 @@ ACTOR_TYPE_PROJECTILE           equ 2
 ;-------- Data Structures -----
 ; generic actor subtype to be used by every object that needs it
                         rsreset
-actor.x                 rs.w        1                       ; position
+actor.x                 rs.w        1                       ; position (top left of actor)
 actor.subpixel_x        rs.w        1                       ; subpixel position
 actor.y                 rs.w        1
 actor.subpixel_y        rs.w        1
@@ -32,6 +32,8 @@ actor.current_anim      rs.w        1                       ;
 actor.respectsBounds    rs.w        1                       ; a flag that determines if the current actor respects screen boundaries
 actor.width             rs.w        1                       ; width of the actor object
 actor.height            rs.w        1                       ; height of the object
+actor.x_middle          rs.w        1                       ; holds the calculated middle position of the actor
+actor.y_middle          rs.w        1                       ; holds the y component
 actor.spritesheetwidth  rs.w        1                       ; width of the spritesheet used as the graphic
 actor.spritesheetheight rs.w        1
 actor.state             rs.w        1                       ; current hard state
@@ -48,6 +50,7 @@ actor.fire_timer        rs.w        1                       ; timer to implement
 actor.fire_delay        rs.w        1                       ; delay between two shots (in frames)
 actor.fire_type         rs.w        1                       ; type of fire
 actor.controller_addr   rs.l        1                       ; point of the attached controller for this actor, if one exists
+actor.sprite_addr       rs.l        1                       ; store the sprite address of the actor if it's a sprite user (projectiles only)
 actor.length            rs.b        0
 
 ;----------- Variables --------
@@ -120,6 +123,15 @@ ProcessActorMovement:
     move.w      d3,actor.subpixel_y(a6)
     move.w      d4,actor.velocity_x(a6)
     move.w      d5,actor.velocity_y(a6)
+    ; calculate the middle position of the actor
+    move.w      actor.width(a6),d2
+    move.w      actor.height(a6),d3
+    lsr.w       d2                                                  ; divide width and height by 2
+    lsr.w       d3
+    add.w       d2,d0
+    add.w       d3,d1
+    move.w      d0,actor.x_middle(a6)
+    move.w      d1,actor.y_middle(a6)
     movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
     rts
 

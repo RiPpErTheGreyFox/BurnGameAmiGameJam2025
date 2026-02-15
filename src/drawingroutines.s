@@ -44,6 +44,118 @@ InitBPLPointers:
     movem.l    (sp)+,d0-a6                                              ; restore registers values from the stack
     rts 
 
+; initialises the sprite pointers with the projectile sprites
+; @clobbers: a1, d0
+InitSpritePointers:
+    movem.l    d0-a6,-(sp)                                          ; copy registers into the stack
+
+    lea         sprite_ptrs,a1
+    move.l      #projectile1_spr,d0
+    move.w      d0,6(a1)                                            ; low word
+    swap d0
+    move.w      d0,2(a1)                                            ; high word
+
+    add.l       #8,a1                                               ; next sprite pointer
+    move.l      #projectile2_spr,d0                              ; next sprite
+    move.w      d0,6(a1)                                            ; low word
+    swap d0
+    move.w      d0,2(a1)                                            ; high word
+
+    add.l       #8,a1                                               ; next sprite pointer
+    move.l      #projectile3_spr,d0                              ; next sprite
+    move.w      d0,6(a1)                                            ; low word
+    swap d0
+    move.w      d0,2(a1)                                            ; high word
+
+    add.l       #8,a1                                               ; next sprite pointer
+    move.l      #projectile4_spr,d0                              ; next sprite
+    move.w      d0,6(a1)                                            ; low word
+    swap d0
+    move.w      d0,2(a1)                                            ; high word
+
+    add.l       #8,a1                                               ; next sprite pointer
+    move.l      #projectile5_spr,d0                              ; next sprite
+    move.w      d0,6(a1)                                            ; low word
+    swap d0
+    move.w      d0,2(a1)                                            ; high word
+
+    add.l       #8,a1                                               ; next sprite pointer
+    move.l      #projectile6_spr,d0                              ; next sprite
+    move.w      d0,6(a1)                                            ; low word
+    swap d0
+    move.w      d0,2(a1)                                            ; high word
+
+    add.l       #8,a1                                               ; next sprite pointer
+    move.l      #projectile7_spr,d0                              ; next sprite
+    move.w      d0,6(a1)                                            ; low word
+    swap d0
+    move.w      d0,2(a1)                                            ; high word
+
+    add.l       #8,a1                                               ; next sprite pointer
+    move.l      #projectile8_spr,d0                              ; next sprite
+    move.w      d0,6(a1)                                            ; low word
+    swap d0
+    move.w      d0,2(a1)                                            ; high word
+
+    ;bset        #7,projectile_spr+76+3                              ; sets sprite 1 attached bit
+
+    movem.l    (sp)+,d0-a6                                          ; restore registers values from the stack
+    rts 
+
+; hides the passed in sprite by moving it off screen
+; @params: a1 - sprite address
+HideSprite:
+    movem.l     d0-a6,-(sp)                                         ; copy registers into the stack
+
+    move.w      #0,d0
+    move.w      #0,d1
+    move.w      #0,d2
+    bsr         SetSpritePosition
+
+    movem.l     (sp)+,d0-a6                                         ; restore registers values from the stack
+    rts
+
+; sets position of a sprite
+; @params: a1 - sprite address
+; @params: d0.w - y position (0-255)
+; @params: d1.w - x position (0-319)
+; @params: d2.w - sprite height
+SetSpritePosition:
+    movem.l     d0-a6,-(sp)                                         ; copy registers into the stack
+
+    add.w       #$2c,d0                                             ; adds offset of screen beginning
+    move.b      d0,(a1)                                             ; copies y value into sprite VSTART byte
+    btst.l      #8,d0                                               ; bit 8 of y position is set?
+    beq         .DontSetBit8 
+    bset.b      #2,3(a1)                                            ; sets bit 8 of VSTART
+    bra         .VSTOP
+.DontSetBit8:
+    bclr.b      #2,3(a1)                                            ; clears bit 8 of VSTART
+.VSTOP:
+    add.w       d2,d0                                               ; adds height to y position to get VSTOP
+    move.b      d0,2(a1)                                            ; copies the value into sprite VSTOP byte
+    btst.l      #8,d0                                               ; bit 8 of VSTOP is set?
+    beq         .DontSetVSTOPBit8
+    bset.b      #1,3(a1)                                            ; sets bit 8 of VSTOP
+    bra         .SetHPos
+.DontSetVSTOPBit8:
+    bclr.b      #1,3(a1)                                            ; clears bit 8 of VSTOP
+.SetHPos:
+    add.w       #128,d1                                             ; adds horizontal offset to x
+    btst.l      #0,d1
+    beq         .HSTARTLSBZero
+    bset.b      #0,3(a1)                                            ; sets bit 0 of HSTART
+    bra         .SetHSTART
+.HSTARTLSBZero:
+    bclr.b      #0,3(a1)                                            ; clears bit 0 of HSTART
+.SetHSTART:
+    lsr.w       #1,d1                                               ; shifts 1 position to right to get the 8
+                                                                    ; most significant bits of x position
+    move.b      d1,1(a1)                                            ; sets HSTART value
+
+    movem.l     (sp)+,d0-a6                                         ; restore registers values from the stack
+    rts
+
 ; waits for the blitter to finish
 ; @clobbers a5
 WaitBlitter:
@@ -51,7 +163,6 @@ WaitBlitter:
     btst.b      #6,DMACONR(a5)          ; if bit 6 is 1, the blitter is busy
     bne         .loop                   ; and then wait until it's zero
     rts
-
 
 ; Draws a bob using the blitter
 ; @params: a0 - image address
@@ -379,8 +490,16 @@ player_mask     incbin "assets/gfx/testsprite.mask"
 enemy_gfx       incbin "assets/gfx/enemytestsprite.raw"
 enemy_mask      incbin "assets/gfx/enemytestsprite.mask"
 
-projectile_gfx  incbin "assets/gfx/projectiletestsprite.raw"
-projectile_mask incbin "assets/gfx/projectiletestsprite.mask"
+    SECTION sprite_data,DATA_C              ; segment loaded into CHIP MEM
+
+projectile1_spr incbin "assets/gfx/sprites/projectiletestsprite.raw"
+projectile2_spr incbin "assets/gfx/sprites/projectiletestsprite.raw"
+projectile3_spr incbin "assets/gfx/sprites/projectiletestsprite.raw"
+projectile4_spr incbin "assets/gfx/sprites/projectiletestsprite.raw"
+projectile5_spr incbin "assets/gfx/sprites/projectiletestsprite.raw"
+projectile6_spr incbin "assets/gfx/sprites/projectiletestsprite.raw"
+projectile7_spr incbin "assets/gfx/sprites/projectiletestsprite.raw"
+projectile8_spr incbin "assets/gfx/sprites/projectiletestsprite.raw"
 
     SECTION copper_segment,DATA_C
 
@@ -391,17 +510,26 @@ copperlist:
     dc.w       DDFSTRT,$38                                              ; display data fetch start at $38
     dc.w       DDFSTOP,$d0                                              ; display data fetch stop at $d0
     dc.w       BPLCON1,0                                          
-    dc.w       BPLCON2,0                                             
+    dc.w       BPLCON2,%100100                                          ; sets sprites priority over playfield
     dc.w       BPL1MOD,0                                             
     dc.w       BPL2MOD,0                                             
 
     dc.w       BPLCON0,$4200                                            ; 4 bitplane lowres video mode
  
+    ; sprite-bitplane collisions
+    ; bit 12: enable sprite 1
+    ; bit 6-9: enable bitplanes 1-4
+    ; bit 0-5: colour index for collisions with playfield
+    ;                  %5432109876543210
+    dc.w        CLXCON,%0001001111001000
+
 cop_palette:
     dc.w       COLOR00,0,COLOR01,0,COLOR02,0,COLOR03,0
     dc.w       COLOR04,0,COLOR05,0,COLOR06,0,COLOR07,0
     dc.w       COLOR08,0,COLOR09,0,COLOR10,0,COLOR11,0
     dc.w       COLOR12,0,COLOR13,0,COLOR14,0,COLOR15,0
+
+sprite_palette  incbin "assets/gfx/sprites/projectiletestsprite.pal"
          
 bplpointers:
     dc.w       BPL1PTH,$0000,BPL1PTL,$0000
@@ -409,7 +537,7 @@ bplpointers:
     dc.w       BPL3PTH,$0000,BPL3PTL,$0000
     dc.w       BPL4PTH,$0000,BPL4PTL,$0000
 
-sprite_prts:
+sprite_ptrs:
     dc.w       SPR0PT,0,SPR0PT+2,0
     dc.w       SPR1PT,0,SPR1PT+2,0
     dc.w       SPR2PT,0,SPR2PT+2,0

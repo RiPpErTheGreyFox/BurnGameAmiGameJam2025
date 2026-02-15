@@ -35,11 +35,12 @@ mainloop:
     ; run major updates
     bsr         UpdateGameManager
     bsr         UpdateProjectileManager
-    bsr         DrawProjectiles
     bsr         UpdatePlayers
-    bsr         DrawPlayers
     bsr         UpdateEnemies
+    
+    bsr         DrawPlayers
     bsr         DrawEnemies
+    bsr         DrawProjectiles
 
 ;    bsr         isConfirmPressed        ; is confirm pressed?
     lea         joystick1_instance,a6
@@ -57,6 +58,7 @@ init:
     bsr         TakeSystem
     bsr         LoadPalette
     bsr         InitBPLPointers
+    bsr         InitSpritePointers
     rts
     
 shutdown:
@@ -73,3 +75,5 @@ shutdown:
     INCLUDE         "projectilemanager.s"
     INCLUDE         "soundmanager.s"
     INCLUDE         "systemroutines.s"
+
+

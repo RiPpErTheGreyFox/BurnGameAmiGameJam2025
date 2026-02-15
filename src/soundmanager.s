@@ -91,7 +91,7 @@ JUMPSOUND:
 JUMPSOUND_LEN=*-JUMPSOUND
 
 TESTSAMPLE:
-    INCBIN      "assets/sounds/secretsample.sb"
+    INCBIN      "assets/sounds/sinesample.sb"
 TESTSAMPLE_LEN=*-TESTSAMPLE
 
 EMPTY_SAMPLE:

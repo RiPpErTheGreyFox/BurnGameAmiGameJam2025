@@ -75,7 +75,9 @@ InitialisePlayer:
     move.w      #PLAYER_ANIM_IDLE,actor.current_anim(a6)            ;actor.current_anim    
     move.w      #1,actor.respectsBounds(a6)                         ;actor.respectsBounds  
     move.w      #PLAYER_WIDTH,actor.width(a6)                       ;actor.width           
-    move.w      #PLAYER_HEIGHT,actor.height(a6)                     ;actor.height          
+    move.w      #PLAYER_HEIGHT,actor.height(a6)                     ;actor.height
+    move.w      #0,actor.x_middle(a6)                               ;actor.x_middle
+    move.w      #0,actor.y_middle(a6)                               ;actor.y_middle          
     move.w      #PLAYER_SPRITESHEET_WIDTH,actor.spritesheetwidth(a6);actor.spritesheetwidth
     move.w      #PLAYER_SPRITESHEET_HEIGHT,actor.spritesheetheight(a6);actor.spritesheetheight
     move.w      #ACTOR_STATE_INACTIVE,actor.state(a6)               ;actor.state           
@@ -92,6 +94,7 @@ InitialisePlayer:
     move.w      #BASE_FIRE_INTERVAL,actor.fire_delay(a6)            ;actor.fire_delay      
     move.w      #BULLET_TYPE_BASE,actor.fire_type(a6)               ;actor.fire_type       
     move.l      #0,actor.controller_addr(a6)                        ;actor.controller_addr 
+    move.l      #0,actor.sprite_addr(a6)                            ;sprite_addr 
     rts
 
 ; actually spawns the dang player
@@ -103,7 +106,15 @@ SpawnPlayer:
     move.w      #0,actor.subpixel_y(a6)                             ;actor.subpixel_y      
     move.w      #0,actor.velocity_x(a6)                             ;actor.velocity_x      
     move.w      #0,actor.velocity_y(a6)                             ;actor.velocity_          
-    move.w      #0,actor.current_frame(a6)                          ;actor.current_frame   
+    move.w      #0,actor.current_frame(a6)                          ;actor.current_frame 
+    move.w      actor.width(a6),d2
+    move.w      actor.height(a6),d3
+    lsr.w       d2                                                  ; divide width and height by 2
+    lsr.w       d3
+    add.w       d2,d0
+    add.w       d3,d1
+    move.w      d0,actor.x_middle(a6)                               ;actor.x_middle
+    move.w      d1,actor.y_middle(a6)                               ;actor.y_middle  
     move.w      #PLAYER_ANIM_IDLE,actor.current_anim(a6)            ;actor.current_anim
     move.w      #ACTOR_STATE_ACTIVE,actor.state(a6)                 ;actor.state           
     move.w      #PLAYER_MOVEMENT_STATE_NORMAL,actor.movement_state(a6);actor.movement_state     

@@ -146,8 +146,8 @@ FindEntityCollidedWith:
     ; iterate through every entity of the intended type, checking size bounds 
     ; semi-universal routine, use d6 as a loop counter, and a4 as the address
 .StartEntitySearch:
-    move.w      actor.x(a6),d0
-    move.w      actor.y(a6),d1
+    move.w      actor.x_middle(a6),d0
+    move.w      actor.y_middle(a6),d1
 .loopStart:
     cmp         #ACTOR_STATE_INACTIVE,actor.state(a4)
     beq         .loopEnd
