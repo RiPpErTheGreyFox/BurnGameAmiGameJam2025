@@ -49,7 +49,7 @@ mainloop:
 
 ;    bsr         StopAllSounds
     beq         mainloop
-    bsr         mainloop                ; DEBUG, don't quit the game when debugging
+;    bsr         mainloop                ; DEBUG, don't quit the game when debugging
 
     bsr         shutdown
     rts

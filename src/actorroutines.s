@@ -173,13 +173,17 @@ UpdateJumpVelocity:
 .collisionCheck:
     ; only check if we're moving down
     tst         d5
-    blt         .falseResult                                        ; if velocity is negative, we're on our way up so don't check
+    ble         .falseResult                                        ; if velocity is negative, we're on our way up so don't check
+    ; also skip if it's equal
+
     ; if we hit something, stop and reset our state back to normal
     ; collision check with temp register, increase it by 1 to check a pixel below us
-    move        d1,d6                                               ; store Y position in a temp register
-    addi        #1,d1
-    jsr         CollisionCheckAtPoint                               ; call the function
-    move        d6,d1                                               ; restore Y position from temp register
+    ; save our real positions and pass in the middle positions
+    movem.l     d0-d1,-(sp)                                         ; store positions
+    move.w      actor.x_middle(a6),d0
+    move.w      actor.y_middle(a6),d1
+    bsr         CollisionCheckAtPoint                               ; call the function
+    movem.l     (sp)+,d0-d1                                         ; restore positions
     btst        #0,d7
     beq         .falseResult
     ; true

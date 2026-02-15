@@ -13,7 +13,7 @@ PLAYER_ACCELERATION             equ 1                       ; in subpixels per f
 PLAYER_DECELERATION             equ 1
 PLAYER_JUMP_VELOCITY_INIT       equ -64                     ; initial velocity to apply to character when jumping
 PLAYER_JUMP_DECELERATE_TIME     equ 24                      ; amount of frames that jump button can be held to limit the deceleration
-SCREEN_BOUNDARY_MIN_X           equ 0
+SCREEN_BOUNDARY_MIN_X           equ 1
 SCREEN_BOUNDARY_MAX_X           equ (0+DISPLAY_WIDTH)               
 SCREEN_BOUNDARY_MIN_Y           equ 0
 SCREEN_BOUNDARY_MAX_Y           equ (VIEWPORT_HEIGHT)
@@ -100,6 +100,8 @@ InitialisePlayer:
 ; actually spawns the dang player
 ; @params: a6 - player actor to spawn
 SpawnPlayer:
+    move.w      #PLAYER_STARTING_POSX,d0
+    move.w      #PLAYER_STARTING_POSY,d1
     move.w      #PLAYER_STARTING_POSX,actor.x(a6)                   ;actor.x               
     move.w      #0,actor.subpixel_x(a6)                             ;actor.subpixel_x      
     move.w      #PLAYER_STARTING_POSY,actor.y(a6)                   ;actor.y               

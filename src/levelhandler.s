@@ -7,6 +7,8 @@
 
 tilemap     include "assets/gfx/DemoLevel1.txm"
 
+;----------- Variables --------
+
 ;---------- Subroutines -------
 
 LevelHandlerStart:
@@ -85,6 +87,39 @@ FillScreenWithTiles:
     movem.l    (sp)+,d0-a6
     rts
 
+; gets the tile address at the specific point
+; @params: d0.w - x position
+; @params: d1.w - y position
+; @returns: a1 - address of the tile that intersects that position
+GetTileAddressAtPoint:
+    ; divide current position by 16 to convert to the scale of the tilemap
+    move.w      bgnd_x,d6
+    andi.w      #%1111,d6
+    add.w       d6,d0                                               ; add the scrolled offset to X
+    lsr.w       #4,d0
+    lsr.w       #4,d1
+
+    ; calculate the address of the tilemap position we're currently in
+    lea         tilemap,a1
+    move.w      #0,d6                                               ; store the offset in d6 for now
+
+    move.w      d1,d7                                               ; copy /16'd Y position as a loop counter
+.YAddressLoop
+    add         #TILEMAP_ROW_SIZE,d6
+    dbra        d7,.YAddressLoop
+
+    ; we now have our address offset as calculated from the Y position
+    adda.w      d6,a1
+    move.w      d0,d6
+    add.w       map_ptr,d6
+    subi.w      #23,d6
+    lsl.w       d6                                                  ; times by two as each row is two bytes
+    ; we now have our address offset as calculated from the X position
+    adda.w      d6,a1
+
+    move.w      (a1),d7
+    rts
+
 ; check for collision at point, basic version just returns a lower plane
 ; doesn't preserve registers
 ; @params: d0.w - X Position to check
@@ -93,16 +128,24 @@ FillScreenWithTiles:
 ; @params: d5.w - Y Velocity
 ; @returns: d7 - 1 if true
 CollisionCheckAtPoint:
+    movem.l    d0-a6,-(sp)
     ; TODO: use a lookup table for collidable tile types
     ; TODO: handle scrolling of the map
     ; for now just return true if position Y is at a certain point
     ; compare Y position if it's above 300, return true
-    cmpi       #142,d1
-    bgt        .returntrue
+    cmpi       #160,d1
+    bge        .returntrue
+
+    bsr         GetTileAddressAtPoint
+
+    cmpi        #1,d7                                               ; if tile = 1, we hit it
+    beq         .returntrue
 
 .returnfalse:
+    movem.l    (sp)+,d0-a6
     move.w     #0,d7
     rts
 .returntrue:
+    movem.l    (sp)+,d0-a6
     move.w     #1,d7
     rts

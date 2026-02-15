@@ -8,6 +8,7 @@
 
 TakeSystem:
     move.l      $4,a6
+    jsr         Forbid(a6)
     jsr         Disable(a6)                                         ; stop multitasking
     lea         gfx_name,a1                                               
     jsr         OpenLibrary(a6)                                     ; open graphics.library
@@ -61,6 +62,7 @@ ReleaseSystem:
     jsr         DisOwnBlitter(a6)                                   ; release Blitter ownership
     move.l      $4,a6
     jsr         Enable(a6)                                          ; enable multitasking
+    jsr         Permit(a6)
     move.l      gfx_base,a1                                               
     jsr         CloseLibrary(a6)                                    ; close graphics.library
     rts
