@@ -484,11 +484,21 @@ bgnd_surface  ds.b       (BGND_PLANE_SIZE*N_PLANES)                             
 tileset         incbin "assets/gfx/DemoLevel1_tileset.raw"
 palette         incbin "assets/gfx/testsprite.pal"
 
+PLAYERGFX:
 player_gfx      incbin "assets/gfx/testsprite.raw"                      ; ship spritesheet 96x96, 3cols x 3rows, frame size: 32x32
 player_mask     incbin "assets/gfx/testsprite.mask"
+PLAYERGFX_LEN=*-PLAYERGFX
 
+player_gfx_flip incbin "assets/gfx/testsprite_flipped.raw"
+player_mask_flip incbin "assets/gfx/testsprite_flipped.mask"
+
+ENEMYGFX:
 enemy_gfx       incbin "assets/gfx/enemytestsprite.raw"
 enemy_mask      incbin "assets/gfx/enemytestsprite.mask"
+ENEMYGFX_LEN=*-ENEMYGFX
+
+enemy_gfx_flip  incbin "assets/gfx/enemytestsprite_flipped.raw"
+enemy_mask_flip incbin "assets/gfx/enemytestsprite_flipped.mask"
 
     SECTION sprite_data,DATA_C              ; segment loaded into CHIP MEM
 

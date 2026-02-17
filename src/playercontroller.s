@@ -68,9 +68,12 @@ InitialisePlayer:
     move.w      #PLAYER_STARTING_POSY,actor.y(a6)                   ;actor.y               
     move.w      #0,actor.subpixel_y(a6)                             ;actor.subpixel_y      
     move.w      #0,actor.velocity_x(a6)                             ;actor.velocity_x      
-    move.w      #0,actor.velocity_y(a6)                             ;actor.velocity_y      
-    move.l      #player_gfx,actor.bobdata(a6)                       ;actor.bobdata         
-    move.l      #player_mask,actor.mask(a6)                         ;actor.mask            
+    move.w      #0,actor.velocity_y(a6)                             ;actor.velocity_y
+    move.w      #0,actor.direction(a6)                              ;actor.direction      
+    move.l      #player_gfx,actor.bobdata(a6)                       ;actor.bobdata
+    move.l      #player_gfx_flip,actor.bobdata_flip(a6)             ;actor.bobdata_flip         
+    move.l      #player_mask,actor.mask(a6)                         ;actor.mask
+    move.l      #player_mask_flip,actor.mask_flip(a6)               ;actor.mask_flip            
     move.w      #0,actor.current_frame(a6)                          ;actor.current_frame   
     move.w      #PLAYER_ANIM_IDLE,actor.current_anim(a6)            ;actor.current_anim    
     move.w      #1,actor.respectsBounds(a6)                         ;actor.respectsBounds  
@@ -105,7 +108,8 @@ SpawnPlayer:
     move.w      #PLAYER_STARTING_POSX,actor.x(a6)                   ;actor.x               
     move.w      #0,actor.subpixel_x(a6)                             ;actor.subpixel_x      
     move.w      #PLAYER_STARTING_POSY,actor.y(a6)                   ;actor.y               
-    move.w      #0,actor.subpixel_y(a6)                             ;actor.subpixel_y      
+    move.w      #0,actor.subpixel_y(a6)                             ;actor.subpixel_y
+    move.w      #1,actor.direction(a6)                              ;actor.direction      
     move.w      #0,actor.velocity_x(a6)                             ;actor.velocity_x      
     move.w      #0,actor.velocity_y(a6)                             ;actor.velocity_          
     move.w      #0,actor.current_frame(a6)                          ;actor.current_frame 
@@ -191,21 +195,33 @@ UpdateRespawnTimer:
 ; @params: a6 - address of the player instance firing a projectile
 FireProjectile:
     movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
-    cmpi        #0,actor.fire_timer(a6)
+    cmpi.w      #0,actor.fire_timer(a6)
     bne         .cantFire                                           ; if anything left in the fire timer, we can't shoot yet
 
-    move.w      actor.x(a6),d0
-    addi.w      #16,d0
+    
     move.w      actor.y(a6),d1
     addi.w      #16,d1
+    move.w      actor.x(a6),d0
+    cmpi.w      #0,actor.direction(a6)
+    bne         .ShootingRight
+.ShootingLeft:
+    move.w      #-48*FRAMEMULTIPLIER,d2
+    bra         .ContinueFiring
+.ShootingRight:
+    addi.w      #16,d0
     move.w      #48*FRAMEMULTIPLIER,d2
+.ContinueFiring:
     move.w      #0,d3
     move.w      #0,d4
     move.l      a6,a0                                               ; save actor reference
     bsr         SpawnProjectile
+    move.l      a6,d6                                               ; store return address for testing if successful
     move.l      a0,a6                                               ; restore actor reference
     move.w      actor.fire_delay(a6),actor.fire_timer(a6)           ; set the fire cooldown timer
-    ; play a fire sound
+    cmpi.l      #0,d6
+    beq         .cantFire                                           ; if d6 = $0, then spawn failed
+    ; play a fire sound if spawning successful
+.PlayFiresound
     lea         TRIANGLE,a6
     move.w      #TRIANGLE_LEN/2,d0
     move.w      0,d1

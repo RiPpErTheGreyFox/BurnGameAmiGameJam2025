@@ -200,11 +200,14 @@ InitialiseEnemy:
     move.w      #ENEMY_STARTING_POSX,actor.x(a6)                    ;actor.x               
     move.w      #0,actor.subpixel_x(a6)                             ;actor.subpixel_x      
     move.w      #ENEMY_STARTING_POSY,actor.y(a6)                    ;actor.y               
-    move.w      #0,actor.subpixel_y(a6)                             ;actor.subpixel_y      
+    move.w      #0,actor.subpixel_y(a6)                             ;actor.subpixel_y
+    move.w      #1,actor.direction(a6)                              ;actor.direction      
     move.w      #0,actor.velocity_x(a6)                             ;actor.velocity_x      
     move.w      #0,actor.velocity_y(a6)                             ;actor.velocity_y      
-    move.l      #enemy_gfx,actor.bobdata(a6)                        ;actor.bobdata         
-    move.l      #enemy_mask,actor.mask(a6)                          ;actor.mask            
+    move.l      #enemy_gfx,actor.bobdata(a6)                        ;actor.bobdata
+    move.l      #enemy_gfx_flip,actor.bobdata_flip(a6)              ;actor.bobdata_flip          
+    move.l      #enemy_mask,actor.mask(a6)                          ;actor.mask
+    move.l      #enemy_mask_flip,actor.mask_flip(a6)                ;actor.bobdata_flip             
     move.w      #0,actor.current_frame(a6)                          ;actor.current_frame   
     move.w      #ENEMY_ANIM_IDLE,actor.current_anim(a6)             ;actor.current_anim    
     move.w      #0,actor.respectsBounds(a6)                         ;actor.respectsBounds  

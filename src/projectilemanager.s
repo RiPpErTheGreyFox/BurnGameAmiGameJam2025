@@ -67,6 +67,8 @@ UpdateProjectile:
     ; TODO: remove this and make projectiles detect properly
     cmpi        #300,actor.x(a6)
     bge         DespawnActor
+    cmpi        #0,actor.x(a6)
+    blt         DespawnActor
     ; doesn't push return address to the stack, so anything here is ignored for now
     rts
 
@@ -118,14 +120,15 @@ InitialiseProjectile:
     move.w      #0,actor.x(a6)                                      ;actor.x               
     move.w      #0,actor.subpixel_x(a6)                             ;actor.subpixel_x      
     move.w      #0,actor.y(a6)                                      ;actor.y               
-    move.w      #0,actor.subpixel_y(a6)                             ;actor.subpixel_y      
+    move.w      #0,actor.subpixel_y(a6)                             ;actor.subpixel_y
+    move.w      #0,actor.direction(a6)                              ;actor.direction         
     move.w      #0,actor.velocity_x(a6)                             ;actor.velocity_x      
     move.w      #0,actor.velocity_y(a6)                             ;actor.velocity_y      
     move.l      #0,actor.bobdata(a6)                                ;actor.bobdata         
     move.l      #0,actor.mask(a6)                                   ;actor.mask            
     move.w      #0,actor.current_frame(a6)                          ;actor.current_frame   
     move.w      #0,actor.current_anim(a6)                           ;actor.current_anim    
-    move.w      #1,actor.respectsBounds(a6)                         ;actor.respectsBounds  
+    move.w      #0,actor.respectsBounds(a6)                         ;actor.respectsBounds  
     move.w      #PROJECTILE_WIDTH,actor.width(a6)                   ;actor.width           
     move.w      #PROJECTILE_HEIGHT,actor.height(a6)                 ;actor.height         
     move.w      #0,actor.x_middle(a6)                               ;actor.x_middle

@@ -23,10 +23,13 @@ actor.x                 rs.w        1                       ; position (top left
 actor.subpixel_x        rs.w        1                       ; subpixel position
 actor.y                 rs.w        1
 actor.subpixel_y        rs.w        1
+actor.direction         rs.w        1                       ; byte that indicates "direction" of actor, 0 - left, 1 - right
 actor.velocity_x        rs.w        1                       ; x velocity in subpixels/f
 actor.velocity_y        rs.w        1                       ; y velocity in subpixels/f
 actor.bobdata           rs.l        1                       ; address of graphics data
+actor.bobdata_flip      rs.l        1                       ; second set of data that's mirrored
 actor.mask              rs.l        1                       ; address of graphics mask
+actor.mask_flip         rs.l        1                       ; second set of mask that's mirrored
 actor.current_frame     rs.w        1                       ; current animation frame
 actor.current_anim      rs.w        1                       ;
 actor.respectsBounds    rs.w        1                       ; a flag that determines if the current actor respects screen boundaries
@@ -65,8 +68,15 @@ DrawActor:
 
     tst.w       actor.visible(a6)                                   ; actor is visible?
     beq         .return                                             ; if not, stop
+    tst.w       actor.direction(a6)                                 ; check which direction actor is facing
+    beq         .FlipActor
     move.l      actor.bobdata(a6),a0                                ; actor's image address
     move.l      actor.mask(a6),a1                                   ; actor's mask address
+    bra         .MoveToDrawBuffer
+.FlipActor:
+    move.l      actor.bobdata_flip(a6),a0
+    move.l      actor.mask_flip(a6),a1
+.MoveToDrawBuffer:
     move.l      draw_buffer,a2                                      ; destination video buffer address
     move.w      actor.x(a6),d0                                      ; x position of the actor in pixels
     move.w      actor.y(a6),d1                                      ; y position of the actor in pixels
@@ -111,6 +121,7 @@ ProcessActorMovement:
 
     bsr         UpdateJumpVelocity
     bsr         ApplyVelocities
+    bsr         DirectionUpdateCheck
     cmpi        #1,actor.respectsBounds(a6)
     bne         .EndOfFunc
     bsr         BoundsCheck
@@ -273,6 +284,20 @@ ApplyVelocities:
     blt         .spilloverYLow
     bra         .endOfFunc
 .endOfFunc
+    rts
+
+; to be called only from the process movement function
+DirectionUpdateCheck:
+    ; check the x velocity number and set the direction byte accordingly
+    cmpi        #0,actor.velocity_x(a6)
+    blt         .HeadingLeft
+    bgt         .HeadingRight
+    rts
+.HeadingLeft:
+    move.w      #0,actor.direction(a6)
+    rts
+.HeadingRight:
+    move.w      #1,actor.direction(a6)
     rts
 
 ; to be called only from the process movement function
