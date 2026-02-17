@@ -3,6 +3,17 @@
                 IFND	GLOBALS_I
 GLOBALS_I      SET	1
 
+;----------- Defines ----------
+;HALFFRAMERATE               SET 0
+
+                            IFD HALFFRAMERATE
+FRAMEMULTIPLIER             EQU 2
+                            ENDC
+                            IFND HALFFRAMERATE
+FRAMEMULTIPLIER             EQU 1
+                            ENDC
+                
+
 ;---------- Constants ---------
                                 ;5432109876543210
 DMASET                      EQU %1000011111000000     ; enable only copper, bitplane and blitter DMA
@@ -31,7 +42,7 @@ BGND_PLANE_SIZE             EQU BGND_HEIGHT*(BGND_WIDTH/8)
 BGND_ROW_SIZE               EQU (BGND_WIDTH/8)
 VIEWPORT_HEIGHT             EQU 192
 VIEWPORT_WIDTH              EQU 320
-SCROLL_SPEED                EQU 2
+SCROLL_SPEED                EQU 2*FRAMEMULTIPLIER
 SCROLL_THRESHOLD_X_RIGHT    EQU 120
 
 ;---------- Variables ---------

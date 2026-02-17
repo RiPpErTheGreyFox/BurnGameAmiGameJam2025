@@ -7,12 +7,12 @@ PLAYER_WIDTH_B                  equ (PLAYER_WIDTH/8)        ; width in bytes
 PLAYER_HEIGHT                   equ 32                      ; height in pixels
 PLAYER_STARTING_POSX            equ 16                      ; starting position
 PLAYER_STARTING_POSY            equ 32
-PLAYER_MAXVELOCITY_X            equ 32                      ; default max speed in subpixel/frame
-PLAYER_MAXVELOCITY_Y            equ 32
-PLAYER_ACCELERATION             equ 1                       ; in subpixels per frame
-PLAYER_DECELERATION             equ 1
+PLAYER_MAXVELOCITY_X            equ 32*FRAMEMULTIPLIER      ; default max speed in subpixel/frame
+PLAYER_MAXVELOCITY_Y            equ 32*FRAMEMULTIPLIER
+PLAYER_ACCELERATION             equ 1*FRAMEMULTIPLIER       ; in subpixels per frame
+PLAYER_DECELERATION             equ 1*FRAMEMULTIPLIER
 PLAYER_JUMP_VELOCITY_INIT       equ -64                     ; initial velocity to apply to character when jumping
-PLAYER_JUMP_DECELERATE_TIME     equ 24                      ; amount of frames that jump button can be held to limit the deceleration
+PLAYER_JUMP_DECELERATE_TIME     equ 24/FRAMEMULTIPLIER      ; amount of frames that jump button can be held to limit the deceleration
 SCREEN_BOUNDARY_MIN_X           equ 1
 SCREEN_BOUNDARY_MAX_X           equ (0+DISPLAY_WIDTH)               
 SCREEN_BOUNDARY_MIN_Y           equ 0
@@ -198,7 +198,7 @@ FireProjectile:
     addi.w      #16,d0
     move.w      actor.y(a6),d1
     addi.w      #16,d1
-    move.w      #48,d2
+    move.w      #48*FRAMEMULTIPLIER,d2
     move.w      #0,d3
     move.w      #0,d4
     move.l      a6,a0                                               ; save actor reference

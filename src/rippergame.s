@@ -1,6 +1,7 @@
 ;---------- Includes ----------
               INCDIR        "include"
               INCLUDE       "hw.i"
+              INCLUDE       "globals.i"
 
     SECTION CODE
 
@@ -25,6 +26,9 @@ main:
 
 mainloop:
     bsr         WaitVBlank
+    IFD         HALFFRAMERATE
+    bsr         WaitVBlank
+    ENDC
     bsr         SwapBuffers
     ; run drawing updates
     bsr         UpdateBackground

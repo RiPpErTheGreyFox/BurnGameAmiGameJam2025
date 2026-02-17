@@ -29,15 +29,15 @@ gamestate_array         dc.w        0                       ; gamestate.curr_poi
 
 testwaypoint            dc.w        30                      ; waypoint.x_pos
                         dc.w        0                       ; waypoint.triggered
-                        dc.w        60                      ; waypoint.respawn_delay
-                        dc.w        180                     ; waypoint.wave_timer
+                        dc.w        60/FRAMEMULTIPLIER      ; waypoint.respawn_delay
+                        dc.w        180/FRAMEMULTIPLIER     ; waypoint.wave_timer
                         dc.w        1                       ; waypoint.wave_amount
                         dc.w        1                       ; waypoint.num_of_waves
 
 testwaypoint2           dc.w        60                      ; waypoint.x_pos
                         dc.w        0                       ; waypoint.triggered
-                        dc.w        60                      ; waypoint.respawn_delay
-                        dc.w        180                     ; waypoint.wave_timer
+                        dc.w        60/FRAMEMULTIPLIER      ; waypoint.respawn_delay
+                        dc.w        180/FRAMEMULTIPLIER     ; waypoint.wave_timer
                         dc.w        2                       ; waypoint.wave_amount
                         dc.w        2                       ; waypoint.num_of_waves
 

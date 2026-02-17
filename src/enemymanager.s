@@ -9,11 +9,11 @@ ENEMY_WIDTH_B                   equ (ENEMY_WIDTH/8)          ; width in bytes
 ENEMY_HEIGHT                    equ 32                       ; height in pixels
 ENEMY_STARTING_POSX             equ 320-ENEMY_WIDTH          ; starting position
 ENEMY_STARTING_POSY             equ 141
-ENEMY_MAXVELOCITY_X             equ 12                       ; default max speed in subpixel/frame
-ENEMY_MAXVELOCITY_Y             equ 48
+ENEMY_MAXVELOCITY_X             equ 12*FRAMEMULTIPLIER       ; default max speed in subpixel/frame
+ENEMY_MAXVELOCITY_Y             equ 48*FRAMEMULTIPLIER
 ENEMY_SUBPIXEL_PER_PIXEL        equ 16                       ; how many subpixels are in each pixel
-ENEMY_ACCELERATION              equ 1                        ; in subpixels per frame
-ENEMY_DECELERATION              equ 1
+ENEMY_ACCELERATION              equ 1*FRAMEMULTIPLIER        ; in subpixels per frame
+ENEMY_DECELERATION              equ 1*FRAMEMULTIPLIER
 ENEMY_JUMP_VELOCITY_INIT        equ -30                      ; initial velocity to apply to character when jumping
 ENEMY_MOVEMENT_STATE_NORMAL     equ 0
 ENEMY_MOVEMENT_STATE_AIRBORNE   equ 1

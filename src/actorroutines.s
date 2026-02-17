@@ -3,8 +3,8 @@
               INCLUDE     "hw.i"
 ;---------- Constants ---------
 ACTOR_SUBPIXEL_PER_PIXEL        equ 16                      ; how many subpixels are in each pixel
-ACTOR_GRAVITY_NORMAL            equ 5                       ; in sp/f
-ACTOR_GRAVITY_SLOW              equ 1                       ; in sp/f
+ACTOR_GRAVITY_NORMAL            equ 5*FRAMEMULTIPLIER       ; in sp/f
+ACTOR_GRAVITY_SLOW              equ 1*FRAMEMULTIPLIER       ; in sp/f
 
 ACTOR_STATE_ACTIVE              equ 0
 ACTOR_STATE_HIT                 equ 1
