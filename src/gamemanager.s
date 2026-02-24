@@ -10,6 +10,9 @@ INITIAL_WAVE_TIMER      equ         60                      ; time between scrol
 gamestate.curr_point    rs.w        1                       ; the index of the current waypoint we're on
 gamestate.waypointarray rs.l        1                       ; address of the beginning of the waypoint array
 gamestate.size_of_array rs.w        1                       ; how many waypoints there are to load
+gamestate.current_state rs.w        1                       ; 0 for main menu, 1 for game, 2 for game over
+gamestate.current_score rs.w        1                       ; word variable for the current score for the game
+gamestate.lives_remaining rs.w      1                       ; number of lives remaining for the game
 gamestate.length        rs.b        0
 
                         rsreset
@@ -20,12 +23,16 @@ waypoint.wave_delay     rs.w        1                       ; gap between enemy 
 waypoint.wave_amount    rs.w        1                       ; amount of enemies in a wave
 waypoint.num_of_waves   rs.w        1                       ; how many waves we're spawning
 waypoint.length         rs.b        0
+
 ; spawn points on the map will be tiles in the background, for now just make them camera space 300
 
 ;----------- Variables --------
 gamestate_array         dc.w        0                       ; gamestate.curr_point
                         dc.l        testwaypoint            ; gamestate.waypointarray
                         dc.w        2                       ; gamestate.size_of_array
+                        dc.w        1                       ; gamestate.current_state
+                        dc.w        0                       ; gamestate.current_score
+                        dc.w        5                       ; gamestate.lives_remaining
 
 testwaypoint            dc.w        30                      ; waypoint.x_pos
                         dc.w        0                       ; waypoint.triggered
@@ -158,3 +165,49 @@ IndexWaypointArray:
     add.l       d0,current_waypoint_addr
     addi        #1,gamestate.curr_point(a6)
     rts
+
+; HUD Draw
+; take the current game data and update the HUD with what is needed
+; update both buffers so we don't need to draw every frame
+; only called upon an update from HUD Update functions
+; need alphabet text renderering implemented (or at least numbers)
+DrawHUD:
+    ; blit the HUD to both buffers
+    bsr         BlitHUD
+    rts
+
+; function that actually sets up and does the blits for the HUD
+; Draw the 320x64 image using blitter
+BlitHUD:
+    lea         hud_background_bob,a0
+    lea         hud_background_mask,a1
+    move.l      draw_buffer,a2                                      ; destination video buffer address
+    move.w      #16,d0                                              ; x position of the actor in pixels
+    move.w      #192,d1                                             ; y position of the actor in pixels
+    move.w      #80,d2                                              ; actor width in pixels
+    move.w      #32,d3                                              ; actor height in pixels
+    move.w      #0,d4                                               ; spritesheet column of actor
+    move.w      #0,d5                                               ; spritesheet row of actor
+    move.w      #80,a3                                              ; spritesheet width
+    move.w      #32,a4                                              ; spritesheet height
+
+    bsr         DrawBOb
+
+    lea         hud_background_bob,a0
+    lea         hud_background_mask,a1
+    move.l      view_buffer,a2                                      ; destination video buffer address
+    move.w      #16,d0                                              ; x position of the actor in pixels
+    move.w      #192,d1                                             ; y position of the actor in pixels
+    move.w      #80,d2                                              ; actor width in pixels
+    move.w      #32,d3                                              ; actor height in pixels
+    move.w      #0,d4                                               ; spritesheet column of actor
+    move.w      #0,d5                                               ; spritesheet row of actor
+    move.w      #80,a3                                              ; spritesheet width
+    move.w      #32,a4                                              ; spritesheet height
+
+    bsr         DrawBOb
+    rts
+    
+    SECTION hud_graphics_data,DATA_C                                    ; segment loaded in CHIP RAM
+hud_background_bob:  incbin "assets/gfx/HUDNumberFont.raw"
+hud_background_mask: incbin "assets/gfx/HUDNumberFont.mask"

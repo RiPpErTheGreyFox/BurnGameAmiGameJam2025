@@ -1,11 +1,9 @@
-;---------- Includes ----------
-              INCDIR        "include"
-              INCLUDE       "hw.i"
-              INCLUDE       "globals.i"
-
-    SECTION CODE
-
+    SECTION CODE,CODE
+;    CNOP        0,2                                                     ; align data in a word boundary
 main:
+    nop
+    nop
+
     bsr         init
     
     move.w      camera_x,d0
@@ -23,6 +21,7 @@ main:
     bsr         EnemyManagerStart
     bsr         ProjectileManagerStart
     bsr         GameManagerStart
+    bsr         DrawHUD
 
 mainloop:
     bsr         WaitVBlank
@@ -53,7 +52,7 @@ mainloop:
 
 ;    bsr         StopAllSounds
     beq         mainloop
-;    bsr         mainloop                ; DEBUG, don't quit the game when debugging
+    bsr         mainloop                ; DEBUG, don't quit the game when debugging
 
     bsr         shutdown
     rts
@@ -68,16 +67,19 @@ init:
 shutdown:
     bsr         ReleaseSystem
     rts
-
-    INCLUDE         "actorroutines.s"
-    INCLUDE         "controllerroutines.s"
-    INCLUDE         "drawingroutines.s"
-    INCLUDE         "enemymanager.s"
-    INCLUDE         "gamemanager.s"
-    INCLUDE         "levelhandler.s"
-    INCLUDE         "playercontroller.s"
-    INCLUDE         "projectilemanager.s"
-    INCLUDE         "soundmanager.s"
-    INCLUDE         "systemroutines.s"
+;---------- Includes ----------
+            INCDIR          "include"
+            INCLUDE         "hw.i"
+            INCLUDE         "globals.i"
+            INCLUDE         "actorroutines.s"
+            INCLUDE         "controllerroutines.s"
+            INCLUDE         "drawingroutines.s"
+            INCLUDE         "enemymanager.s"
+            INCLUDE         "gamemanager.s"
+            INCLUDE         "levelhandler.s"
+            INCLUDE         "playercontroller.s"
+            INCLUDE         "projectilemanager.s"
+            INCLUDE         "soundmanager.s"
+            INCLUDE         "systemroutines.s"
 
 
