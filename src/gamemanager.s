@@ -55,6 +55,9 @@ current_wave_timer      ds.w        1                       ; amount of frames l
 current_wave_number     ds.w        1                       ; number of waves of enemies to spawn
 current_waypoint_addr   ds.l        1                       ; pointer to the current waypoint
 
+test_string             dc.b        "0123456789",0,0
+temp_string            dcb.b       8,'0'
+
 ;---------- Subroutines -------
     SECTION CODE
 
@@ -166,48 +169,60 @@ IndexWaypointArray:
     addi        #1,gamestate.curr_point(a6)
     rts
 
+; Increases score by passed in amount and forces a HUD update
+; @params: d0.w - amount to increase score by
+IncreaseScore:
+    movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
+    lea         gamestate_array,a6
+    move.w      gamestate.current_score(a6),d1
+    add.w       d0,d1
+    move.w      d1,gamestate.current_score(a6)
+    bsr         DrawHUD
+    movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
+    rts
+
+; Decreases lives by one and forces a HUD update
+DecreaseLives:
+    movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
+    lea         gamestate_array,a6
+    move.w      gamestate.lives_remaining(a6),d1
+    subq.w      #1,d1
+    move.w      d1,gamestate.lives_remaining(a6)
+    bsr         DrawHUD
+    movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
+    rts
+
 ; HUD Draw
 ; take the current game data and update the HUD with what is needed
 ; update both buffers so we don't need to draw every frame
 ; only called upon an update from HUD Update functions
 ; need alphabet text renderering implemented (or at least numbers)
 DrawHUD:
+    movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
     ; blit the HUD to both buffers
-    bsr         BlitHUD
-    rts
 
-; function that actually sets up and does the blits for the HUD
-; Draw the 320x64 image using blitter
-BlitHUD:
-    lea         hud_background_bob,a0
-    lea         hud_background_mask,a1
-    move.l      draw_buffer,a2                                      ; destination video buffer address
-    move.w      #16,d0                                              ; x position of the actor in pixels
-    move.w      #192,d1                                             ; y position of the actor in pixels
-    move.w      #80,d2                                              ; actor width in pixels
-    move.w      #32,d3                                              ; actor height in pixels
-    move.w      #0,d4                                               ; spritesheet column of actor
-    move.w      #0,d5                                               ; spritesheet row of actor
-    move.w      #80,a3                                              ; spritesheet width
-    move.w      #32,a4                                              ; spritesheet height
+    lea         gamestate_array,a6
+    move.w      gamestate.current_score(a6),d0
+    lea         temp_string,a0
+    bsr         NumToString
 
-    bsr         DrawBOb
+    lea         temp_string,a2
+    move.w      #280,d3
+    move.w      #192+9,d4
+    bsr         DrawString
 
-    lea         hud_background_bob,a0
-    lea         hud_background_mask,a1
-    move.l      view_buffer,a2                                      ; destination video buffer address
-    move.w      #16,d0                                              ; x position of the actor in pixels
-    move.w      #192,d1                                             ; y position of the actor in pixels
-    move.w      #80,d2                                              ; actor width in pixels
-    move.w      #32,d3                                              ; actor height in pixels
-    move.w      #0,d4                                               ; spritesheet column of actor
-    move.w      #0,d5                                               ; spritesheet row of actor
-    move.w      #80,a3                                              ; spritesheet width
-    move.w      #32,a4                                              ; spritesheet height
-
-    bsr         DrawBOb
-    rts
     
-    SECTION hud_graphics_data,DATA_C                                    ; segment loaded in CHIP RAM
-hud_background_bob:  incbin "assets/gfx/HUDNumberFont.raw"
-hud_background_mask: incbin "assets/gfx/HUDNumberFont.mask"
+    lea         gamestate_array,a6
+    move.w      gamestate.lives_remaining(a6),d0
+    lea         temp_string,a0
+    bsr         NumToString
+
+    lea         temp_string,a2
+    move.w      #280,d3
+    move.w      #192+9+16,d4
+    bsr         DrawString
+
+    movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
+    rts
+
+    

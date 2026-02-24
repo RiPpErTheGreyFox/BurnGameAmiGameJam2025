@@ -131,6 +131,8 @@ SpawnPlayer:
     move.w      #0,actor.jump_decel_timer(a6)                       ;actor.jump_decel_timer
     move.w      #0,actor.fire_timer(a6)                             ;actor.fire_timer
 
+    bsr         DecreaseLives
+
     rts
 
 UpdatePlayers:

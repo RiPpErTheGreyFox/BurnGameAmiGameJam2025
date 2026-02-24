@@ -40,7 +40,7 @@ List a things to make the MVP possible:
 *Sound playing
 
 MVP to-do final week of Jan: (failed, working on this still in Feb)
-BIG BLOCK: Come up with level format (needs both graphics and scripts (scroll stops and enemy spawns))
+*BIG BLOCK: Come up with level format (needs both graphics and scripts (scroll stops and enemy spawns))
 *Play the most basic sound to make sure the system works
 *BIG BLOCK: Create a pool allocation for the enemies and projectiles to spawn and be managed
 *make players shoot projectiles that kill enemies *(need collision detection written, DONE)
@@ -49,6 +49,20 @@ BIG BLOCK: Come up with level format (needs both graphics and scripts (scroll st
 
 Minimum viable product:
 Start screen with basic logo, firefighter moves onto nonscrolling unanimated background, enemies spawn at random intervals, firefighter can attack them, enemies move around at random and can attack randomly, PAL Amiga and possibly overspecced for testing, as long as player can die or clear X number of enemies, MVP is reached, basic sound effects are a bonus
+
+Final stretch tasks:
+*Create HUD management functions that can be called from actors to updated the score/health bars
+*320x64 resolution
+*Contains score 
+    and healthbars
+*Make a drawn HUD that only redraws when updated
+*Create a text renderer that converts binary numbers to BCD and then draws them out using bobs
+Refine the HUD with some graphics
+Queue up all required sounds and art to be integrated later in the week
+Redesign the level to make it slightly more interesting (cut elevation changes)
+Add health to enemies with knockback and players too
+Add an invulnerable state
+Create a title screen that allows player selection
 
 Stretch goals:
 Multiple players, multiple characters, XP system for the run, bosses, minibosses, multiple enemy types, multiple levels, scrolling levels, using copper to draw high-res score/info at the top of the screen, animated level tile sets, weapon pickups, health pickups, pop ups with dialogue, music, sound effects, NTSC support

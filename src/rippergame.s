@@ -31,7 +31,6 @@ mainloop:
     bsr         SwapBuffers
     ; run drawing updates
     bsr         UpdateBackground
-
     ; updated controllers
     bsr         JoystickUpdate
 
@@ -75,6 +74,7 @@ shutdown:
             INCLUDE         "controllerroutines.s"
             INCLUDE         "drawingroutines.s"
             INCLUDE         "enemymanager.s"
+            INCLUDE         "fontmanager.s"
             INCLUDE         "gamemanager.s"
             INCLUDE         "levelhandler.s"
             INCLUDE         "playercontroller.s"

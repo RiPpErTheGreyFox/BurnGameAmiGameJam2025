@@ -61,6 +61,8 @@ UpdateProjectile:
     move.l      a6,a0
     move.l      a4,a6
     bsr         DespawnActor
+    move.w      #123,d0
+    bsr         IncreaseScore
     move.l      a0,a6
     bsr         DespawnActor
 .DespawnCheck:
