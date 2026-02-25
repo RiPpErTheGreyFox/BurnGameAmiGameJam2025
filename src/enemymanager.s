@@ -31,6 +31,8 @@ ENEMY_INV_STATE_DURATION        equ (50)/FRAMEMULTIPLIER    ; duration of the in
 ENEMY_FLASH_DURATION            equ 3                       ; flashing duration (in frames)
 ENEMY_STARTING_HEALTH           equ 10
 ENEMY_STARTING_DAMAGE           equ 10
+ENEMY_SUBTYPE_NORMAL            equ 0
+ENEMY_SUBTYPE_WANDERER          equ 1
 ;-------- Data Structures -----
 
 ;----------- Variables --------
@@ -237,7 +239,7 @@ InitialiseEnemy:
     move.w      #0,actor.jump_decel_timer(a6)                       ;actor.jump_decel_timer
     move.w      #0,actor.fire_timer(a6)                             ;actor.fire_timer      
     move.w      #BASE_FIRE_INTERVAL,actor.fire_delay(a6)            ;actor.fire_delay      
-    move.w      #BULLET_TYPE_BASE,actor.fire_type(a6)               ;actor.fire_type       
+    move.w      #ENEMY_SUBTYPE_NORMAL,actor.fire_type(a6)           ;actor.fire_type       
     move.l      #0,actor.controller_addr(a6)                        ;actor.controller_addr
     move.l      #0,actor.sprite_addr(a6)                            ;sprite_addr 
 
@@ -318,6 +320,28 @@ SpawnEnemy:
     move.w      #1,actor.visible(a6)                                    ;actor.visible 
     move.w      #ENEMY_STARTING_HEALTH,actor.health(a6)                 ;actor.health        
     move.w      #0,actor.jump_decel_timer(a6)                           ;actor.jump_decel_timer
-    move.w      #0,actor.fire_timer(a6)                                 ;actor.fire_timer      
-.spawnFailed:
+    move.w      #0,actor.fire_timer(a6)                                 ;actor.fire_timer
+    ; get a random number for the enemy type
+    bsr         GetRandomNumber
+    move.b      prng_number,d2
+    andi.w      #%1,d2                                                  ; random number between 0 and 1
+    move.w      d2,actor.fire_type(a6)
+    cmpi        #ENEMY_SUBTYPE_NORMAL,actor.fire_type(a6)
+    beq         .NormalEnemySpawn
+    cmpi        #ENEMY_SUBTYPE_WANDERER,actor.fire_type(a6)
+    beq         .WandererEnemySpawn
+.NormalEnemySpawn      
+    move.l      #enemy_gfx,actor.bobdata(a6)                       ;actor.bobdata
+    move.l      #enemy_gfx_flip,actor.bobdata_flip(a6)             ;actor.bobdata_flip          
+    move.l      #enemy_mask,actor.mask(a6)                          ;actor.mask
+    move.l      #enemy_mask_flip,actor.mask_flip(a6)                ;actor.bobdata_flip
+    bra         .Return
+.WandererEnemySpawn      
+    move.l      #enemy2_gfx,actor.bobdata(a6)                       ;actor.bobdata
+    move.l      #enemy2_gfx_flip,actor.bobdata_flip(a6)             ;actor.bobdata_flip          
+    move.l      #enemy2_mask,actor.mask(a6)                         ;actor.mask
+    move.l      #enemy2_mask_flip,actor.mask_flip(a6)               ;actor.bobdata_flip
+    bra         .Return
+.spawnFailed
+.Return
     rts

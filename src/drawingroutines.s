@@ -500,6 +500,14 @@ ENEMYGFX_LEN=*-ENEMYGFX
 enemy_gfx_flip  incbin "assets/gfx/enemytestsprite_flipped.raw"
 enemy_mask_flip incbin "assets/gfx/enemytestsprite_flipped.mask"
 
+ENEMY2GFX:
+enemy2_gfx       incbin "assets/gfx/enemy2testsprite.raw"
+enemy2_mask      incbin "assets/gfx/enemytestsprite.mask"
+ENEMY2GFX_LEN=*-ENEMYGFX
+
+enemy2_gfx_flip  incbin "assets/gfx/enemy2testsprite_flipped.raw"
+enemy2_mask_flip incbin "assets/gfx/enemytestsprite_flipped.mask"
+
     SECTION sprite_data,DATA_C              ; segment loaded into CHIP MEM
 
 projectile1_spr incbin "assets/gfx/sprites/projectiletestsprite.raw"
