@@ -64,6 +64,17 @@ Add health to enemies with knockback and players too
 Add an invulnerable state
 Create a title screen that allows player selection
 
+Wednesday to-do list:
+*Remove the ground detection and just hit it with a flat plane (for performance)
+Add a second enemy type with different graphics and behaviours
+*Add a knockback state to enemies and players
+*Add a flashing state to enemies and players
+*Add a small invulnerability timer to enemies and players
+*Add health to players and enemies
+Adapt a drawing routine for drawing health bars (use the CPU like with font, forget the blitter because of how weirdly shaped they will be)
+*Update string renderer to render all characters in the topaz font
+
+
 Stretch goals:
 Multiple players, multiple characters, XP system for the run, bosses, minibosses, multiple enemy types, multiple levels, scrolling levels, using copper to draw high-res score/info at the top of the screen, animated level tile sets, weapon pickups, health pickups, pop ups with dialogue, music, sound effects, NTSC support
 

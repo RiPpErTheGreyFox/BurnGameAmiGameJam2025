@@ -136,10 +136,10 @@ CollisionCheckAtPoint:
     cmpi       #160,d1
     bge        .returntrue
 
-    bsr         GetTileAddressAtPoint
+    ;bsr         GetTileAddressAtPoint
 
-    cmpi        #1,d7                                               ; if tile = 1, we hit it
-    beq         .returntrue
+    ;cmpi        #1,d7                                               ; if tile = 1, we hit it
+    ;beq         .returntrue
 
 .returnfalse:
     movem.l    (sp)+,d0-a6

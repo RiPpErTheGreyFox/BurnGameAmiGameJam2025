@@ -226,6 +226,17 @@ DrawHUD:
     move.w      #192+9+16,d4
     bsr         DrawString
 
+    ;debug player 2 health
+    lea         pl_instance2,a6
+    move.w      actor.health(a6),d0
+    lea         temp_string,a0
+    bsr         NumToString
+
+    lea         temp_string,a2
+    move.w      #120,d3
+    move.w      #192+9+16,d4
+    bsr         DrawString
+
     movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
     rts
 

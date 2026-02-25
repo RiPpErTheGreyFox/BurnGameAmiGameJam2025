@@ -28,17 +28,19 @@ PLAYER_FRAME_SIZE               equ (PLAYER_WIDTH_B*PLAYER_HEIGHT)
 PLAYER_MASK_SIZE                equ (PLAYER_WIDTH_B*PLAYER_HEIGHT)
 PLAYER_SPRITESHEET_WIDTH        equ 96
 PLAYER_SPRITESHEET_HEIGHT       equ 96
+PLAYER_STARTING_HEALTH          equ 100
 
 ; player states:
 ; - active: accepts input, can collide with enemies
 ; - hit: the player has been hit, collisions are disabled
 ; - invincible: the player is now invulnerable for a short time
 
-PLAYER_MAX_ANIM_DELAY           equ 10                      ; delay between two animation frames (in frames)
-PLAYER_INV_STATE_DURATION       equ (50*5)                  ; duration of the invincible state (in frames)
+PLAYER_MAX_ANIM_DELAY           equ 10/FRAMEMULTIPLIER      ; delay between two animation frames (in frames)
+PLAYER_INV_STATE_DURATION       equ (50*5)/FRAMEMULTIPLIER  ; duration of the invincible state (in frames)
+PLAYER_RESPAWN_DURATION         equ (50*5)/FRAMEMULTIPLIER
 PLAYER_FLASH_DURATION           equ 3                       ; flashing duration (in frames)
 
-BASE_FIRE_INTERVAL              equ 7                       ; delay between two shots for base bullets
+BASE_FIRE_INTERVAL              equ 7/FRAMEMULTIPLIER       ; delay between two shots for base bullets
 BULLET_TYPE_BASE                equ 0                       ; types of bullets
 
 ;----------- Variables --------
@@ -87,11 +89,13 @@ InitialisePlayer:
     move.w      #PLAYER_MOVEMENT_STATE_NORMAL,actor.movement_state(a6);actor.movement_state  
     move.w      #PLAYER_MAX_ANIM_DELAY,actor.anim_delay(a6)         ;actor.anim_delay      
     move.w      #PLAYER_MAX_ANIM_DELAY,actor.anim_timer(a6)         ;actor.anim_timer      
-    move.w      #PLAYER_INV_STATE_DURATION,actor.inv_timer(a6)      ;actor.inv_timer       
+    move.w      #PLAYER_INV_STATE_DURATION,actor.inv_timer(a6)      ;actor.inv_timer
+    move.w      #0,actor.respawn_timer(a6)                          ;actor.respawn_timer       
     move.w      #PLAYER_FLASH_DURATION,actor.flash_timer(a6)        ;actor.flash_timer     
     move.w      #0,actor.visible(a6)                                ;actor.visible
     move.w      #1,actor.gravity(a6)                                ;actor.gravity         
     move.w      #ACTOR_TYPE_PLAYER,actor.type(a6)                   ;actor.type
+    move.w      #PLAYER_STARTING_HEALTH,actor.health(a6)            ;actor.health
     move.w      #0,actor.jump_decel_timer(a6)                       ;actor.jump_decel_timer
     move.w      #0,actor.fire_timer(a6)                             ;actor.fire_timer      
     move.w      #BASE_FIRE_INTERVAL,actor.fire_delay(a6)            ;actor.fire_delay      
@@ -125,9 +129,11 @@ SpawnPlayer:
     move.w      #ACTOR_STATE_ACTIVE,actor.state(a6)                 ;actor.state           
     move.w      #PLAYER_MOVEMENT_STATE_NORMAL,actor.movement_state(a6);actor.movement_state     
     move.w      #PLAYER_MAX_ANIM_DELAY,actor.anim_timer(a6)         ;actor.anim_timer      
-    move.w      #PLAYER_INV_STATE_DURATION,actor.inv_timer(a6)      ;actor.inv_timer       
+    move.w      #PLAYER_INV_STATE_DURATION,actor.inv_timer(a6)      ;actor.inv_timer
+    move.w      #0,actor.respawn_timer(a6)                          ;actor.respawn_timer       
     move.w      #PLAYER_FLASH_DURATION,actor.flash_timer(a6)        ;actor.flash_timer     
     move.w      #1,actor.visible(a6)                                ;actor.visible
+    move.w      #PLAYER_STARTING_HEALTH,actor.health(a6)            ;actor.health
     move.w      #0,actor.jump_decel_timer(a6)                       ;actor.jump_decel_timer
     move.w      #0,actor.fire_timer(a6)                             ;actor.fire_timer
 
@@ -144,6 +150,7 @@ UpdatePlayers:
     bsr         UpdateAnimation
     bsr         UpdateFireTimer
     bsr         UpdateRespawnTimer
+    bsr         UpdateInvulnerableTimer
     ; update and draw player 2
     lea         joystick2_instance,a4
     lea         pl_instance2,a6
@@ -152,6 +159,7 @@ UpdatePlayers:
     bsr         UpdateAnimation
     bsr         UpdateFireTimer
     bsr         UpdateRespawnTimer
+    bsr         UpdateInvulnerableTimer
 
     rts
 
@@ -184,8 +192,8 @@ UpdateFireTimer:
 UpdateRespawnTimer:
     cmpi        #ACTOR_STATE_DEAD,actor.state(a6)
     bne         .SkipFunction
-    subi        #1,actor.inv_timer(a6)
-    cmpi        #0,actor.inv_timer(a6)
+    subi        #1,actor.respawn_timer(a6)
+    cmpi        #0,actor.respawn_timer(a6)
     beq         .RespawnPlayer
     bra         .SkipFunction
 .RespawnPlayer
@@ -368,23 +376,4 @@ PlayerScreenScrolled:
     add.w       d0,actor.x(a6)
     add.w       d1,actor.y(a6)
     movem.l     (sp)+,d0-a6                                         ; restore registers onto the stack
-    rts
-
-; function that's called from foreign entities to apply damage and hit effects to the player
-; @params: a4 - target player
-; @params: d0 - amount of damage
-; @params: d1 - knockback x
-; @params: d2 - knockback y
-PlayerHit:
-    ; check to see if player is able to be hit (in active state)
-    cmpi        #ACTOR_STATE_ACTIVE,actor.state(a4)
-    bne         .SkipFunction
-    ; if they are, swap them to the hit state and apply damage/knockback
-    move.l      a6,a0
-    move.l      a4,a6
-    bsr         DespawnActor
-    move.w      #ACTOR_STATE_DEAD,actor.state(a6)
-    move.w      #PLAYER_INV_STATE_DURATION,actor.inv_timer(a6)
-    move.l      a0,a6
-.SkipFunction
     rts

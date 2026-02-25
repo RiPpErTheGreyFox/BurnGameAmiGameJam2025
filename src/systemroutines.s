@@ -153,6 +153,8 @@ FindEntityCollidedWith:
 .loopStart:
     cmp         #ACTOR_STATE_INACTIVE,actor.state(a4)
     beq         .loopEnd
+    cmp         #ACTOR_STATE_DEAD,actor.state(a4)
+    beq         .loopEnd
     bsr         IsPointWithinEntity
     cmp         #1,d2
     beq         .EntityFound

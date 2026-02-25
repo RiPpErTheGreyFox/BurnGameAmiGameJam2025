@@ -8,7 +8,7 @@ PROJECTILE_HEIGHT               EQU 16
 PROJECTILE_SPRITESHEET_W        EQU 16
 PROJECTILE_SPRITESHEET_H        EQU 16
 
-
+PROJECTILE_STARTING_DAMAGE      EQU 5
 PROJECTILE_MAX_COUNT            EQU 8
 
 ;----------- Variables --------
@@ -57,12 +57,12 @@ UpdateProjectile:
     beq         .EnemyHit
     bra         .DespawnCheck
 .EnemyHit:
+    move.w      actor.health(a6),d0                                 ; place the "health" (damage) of the projectile into d0
     ; save reference to a6 to call despawn
     move.l      a6,a0
     move.l      a4,a6
-    bsr         DespawnActor
-    move.w      #123,d0
-    bsr         IncreaseScore
+    ; actually apply damage to the other entity
+    bsr         HitActor
     move.l      a0,a6
     bsr         DespawnActor
 .DespawnCheck:
@@ -145,7 +145,8 @@ InitialiseProjectile:
     move.w      #0,actor.flash_timer(a6)                            ;actor.flash_timer     
     move.w      #0,actor.visible(a6)                                ;actor.visible
     move.w      #0,actor.gravity(a6)                                ;actor.gravity         
-    move.w      #ACTOR_TYPE_PROJECTILE,actor.type(a6)               ;actor.type         
+    move.w      #ACTOR_TYPE_PROJECTILE,actor.type(a6)               ;actor.type 
+    move.w      #PROJECTILE_STARTING_DAMAGE,actor.health(a6)        ;actor.health        
     move.w      #0,actor.jump_decel_timer(a6)                       ;actor.jump_decel_timer
     move.w      #0,actor.fire_timer(a6)                             ;actor.fire_timer      
     move.w      #0,actor.fire_delay(a6)                             ;actor.fire_delay      

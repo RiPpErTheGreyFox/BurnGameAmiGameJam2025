@@ -26,9 +26,11 @@ ENEMY_FRAME_SIZE                equ (ENEMY_WIDTH_B*ENEMY_HEIGHT)
 ENEMY_MASK_SIZE                 equ (ENEMY_WIDTH_B*ENEMY_HEIGHT)
 ENEMY_SPRITESHEET_WIDTH         equ 96
 ENEMY_SPRITESHEET_HEIGHT        equ 96
-ENEMY_MAX_ANIM_DELAY            equ 10                      ; delay between two animation frames (in frames)
-ENEMY_INV_STATE_DURATION        equ (50*5)                  ; duration of the invincible state (in frames)
+ENEMY_MAX_ANIM_DELAY            equ 10/FRAMEMULTIPLIER      ; delay between two animation frames (in frames)
+ENEMY_INV_STATE_DURATION        equ (50)/FRAMEMULTIPLIER    ; duration of the invincible state (in frames)
 ENEMY_FLASH_DURATION            equ 3                       ; flashing duration (in frames)
+ENEMY_STARTING_HEALTH           equ 10
+ENEMY_STARTING_DAMAGE           equ 50
 ;-------- Data Structures -----
 
 ;----------- Variables --------
@@ -56,10 +58,13 @@ UpdateEnemies:
 .loopStart:
     cmpi        #ACTOR_STATE_INACTIVE,actor.state(a6)
     beq         .loopEnd
+    cmpi        #ACTOR_STATE_DEAD,actor.state(a6)                   ; skip if enemy is dead
+    beq         .loopEnd
     bsr         ProcessEnemyAI
     bsr         CheckEnemyPlayerCollision
     bsr         ProcessActorMovement
     bsr         UpdateAnimation
+    bsr         UpdateInvulnerableTimer
 .loopEnd:
     adda        #actor.length,a6
     dbra        d0,.loopStart                                       ; repeat number of times for every projectile
@@ -73,8 +78,8 @@ DrawEnemies:
     lea         enemy_array,a6
     move.w      #ENEMY_MAX_COUNT-1,d0                               ; off by one
 .loopStart:
-    cmpi        #0,actor.visible(a6)
-    beq         .loopEnd
+    cmpi        #1,actor.visible(a6)
+    bne         .loopEnd
     bsr         DrawActor
 .loopEnd:
     adda        #actor.length,a6
@@ -118,7 +123,9 @@ CheckEnemyPlayerCollision:
     rts
 .PlayerHit
     ; call the players "is hit" function
-    bsr         PlayerHit
+    move.l      a4,a6
+    move.w      #ENEMY_STARTING_DAMAGE,d0
+    bsr         HitActor
     movem.l     (sp)+,d0-a6 
     rts
 
@@ -221,11 +228,12 @@ InitialiseEnemy:
     move.w      #ENEMY_MOVEMENT_STATE_NORMAL,actor.movement_state(a6);actor.movement_state  
     move.w      #ENEMY_MAX_ANIM_DELAY,actor.anim_delay(a6)          ;actor.anim_delay      
     move.w      #ENEMY_MAX_ANIM_DELAY,actor.anim_timer(a6)          ;actor.anim_timer      
-    move.w      #ENEMY_INV_STATE_DURATION,actor.inv_timer(a6)       ;actor.inv_timer       
+    move.w      #0,actor.inv_timer(a6)                              ;actor.inv_timer       
     move.w      #ENEMY_FLASH_DURATION,actor.flash_timer(a6)         ;actor.flash_timer     
     move.w      #0,actor.visible(a6)                                ;actor.visible
     move.w      #1,actor.gravity(a6)                                ;actor.gravity         
     move.w      #ACTOR_TYPE_ENEMY,actor.type(a6)                    ;actor.type
+    move.w      #ENEMY_STARTING_HEALTH,actor.health(a6)             ;actor.health
     move.w      #0,actor.jump_decel_timer(a6)                       ;actor.jump_decel_timer
     move.w      #0,actor.fire_timer(a6)                             ;actor.fire_timer      
     move.w      #BASE_FIRE_INTERVAL,actor.fire_delay(a6)            ;actor.fire_delay      
@@ -305,16 +313,11 @@ SpawnEnemy:
     move.b      prng_number,d2
     andi.w      #%111,d2                                                ;random number between 1 and 8
     addq.b      #1,d2  
-    move.w      d2,actor.anim_timer(a6)                                 ;actor.anim_timer     
-    move.w      #1,actor.visible(a6)                                    ;actor.visible         
+    move.w      d2,actor.anim_timer(a6)                                 ;actor.anim_timer      
+    move.w      #0,actor.inv_timer(a6)                                  ;actor.inv_timer     
+    move.w      #1,actor.visible(a6)                                    ;actor.visible 
+    move.w      #ENEMY_STARTING_HEALTH,actor.health(a6)                 ;actor.health        
     move.w      #0,actor.jump_decel_timer(a6)                           ;actor.jump_decel_timer
     move.w      #0,actor.fire_timer(a6)                                 ;actor.fire_timer      
 .spawnFailed:
-    rts
-
-; disables the enemy pointed to by the address
-; @params: a6 - address of actor to disable
-DespawnActor:
-    move.w      #ACTOR_STATE_INACTIVE,actor.state(a6)
-    move.w      #0,actor.visible(a6)
     rts

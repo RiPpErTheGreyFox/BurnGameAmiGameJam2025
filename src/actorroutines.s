@@ -44,10 +44,12 @@ actor.movement_state    rs.w        1                       ; current movement s
 actor.anim_delay        rs.w        1                       ; delay between two animation frames
 actor.anim_timer        rs.w        1                       ; timer for the anim_delay
 actor.inv_timer         rs.w        1                       ; timer for invulnerable state
+actor.respawn_timer     rs.w        1                       ; timer for respawning
 actor.flash_timer       rs.w        1                       ; timer for flashing
 actor.visible           rs.w        1                       ; visibility flag: 1 visible, 0 not
 actor.gravity           rs.w        1                       ; gravity flag: 1 is affected by gravity, 0 is not
 actor.type              rs.w        1                       ; used for checking actor types in universal functions
+actor.health            rs.w        1                       ; used for tracking health on individual actors
 actor.jump_decel_timer  rs.w        1                       ; timer variable to track jump deceleration
 actor.fire_timer        rs.w        1                       ; timer to implement a delay between subsequent shots
 actor.fire_delay        rs.w        1                       ; delay between two shots (in frames)
@@ -385,4 +387,98 @@ UpdateAnimation:
     move.w      d1,actor.current_anim(a6)
     move.w      d6,actor.current_frame(a6)
     move.w      d7,actor.anim_timer(a6)
+    rts
+
+; updates the tickdown timer for invulnerable/flashing states
+; @params: a6 - address of the actor to update
+UpdateInvulnerableTimer:
+    movem.l     d0-a6,-(sp)
+    cmpi        #0,actor.inv_timer(a6)
+    bgt         .TickDownInv
+    bra         .FlashingTickDownCheck
+.TickDownInv
+    subi.w      #1,actor.inv_timer(a6)
+    cmpi        #0,actor.inv_timer(a6)
+    beq         .SetVisible
+.FlashingTickDownCheck
+    ; if we still have any time left on our tick down, then do the flashing checks
+    cmpi        #0,actor.inv_timer(a6)
+    beq         .Return
+    cmpi        #0,actor.flash_timer(a6)
+    beq         .FlipVisibility
+    subi        #1,actor.flash_timer(a6)
+    bra         .Return
+.SetVisible
+    move.w      #1,actor.visible(a6)
+    bra         .Return
+.FlipVisibility
+    move.w      #PLAYER_FLASH_DURATION,actor.flash_timer(a6)
+    move.w      actor.visible(a6),d0
+    not.w       d0
+    move.w      d0,actor.visible(a6)
+.Return
+    movem.l     (sp)+,d0-a6 
+    rts
+
+; disables the actor pointed to by the address
+; @params: a6 - address of actor to disable
+DespawnActor:
+    move.w      #ACTOR_STATE_INACTIVE,actor.state(a6)
+    move.w      #0,actor.visible(a6)
+    rts
+
+; applies the damage in the param to the actor, calls the death function depending on type
+; @params: d0.w - amount of damage to apply to the actor
+; @params: d1.w - knockback x
+; @params: d2.w - knockback y
+; @params: a6 - address of the actor to interact with
+HitActor:
+    movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
+
+    cmpi        #ACTOR_STATE_ACTIVE,actor.state(a6)
+    bne         .Return
+
+    cmpi        #0,actor.inv_timer(a6)
+    bgt         .Return
+
+    move.w      actor.health(a6),d3
+    sub.w       d0,d3
+    move.w      d3,actor.health(a6)
+    ;DEBUG
+    bsr         DrawHUD
+
+
+    cmpi        #ACTOR_TYPE_ENEMY,actor.type(a6)
+    beq         .DamageAppliedEnemy
+    cmpi        #ACTOR_TYPE_PLAYER,actor.type(a6)
+    beq         .DamageAppliedPlayer
+    bra         .SpecificDamageChecksOver
+.DamageAppliedPlayer
+    move.w      #PLAYER_INV_STATE_DURATION,actor.inv_timer(a6)
+    move.w      #-20,actor.velocity_x(a6)
+    move.w      #-60,actor.velocity_y(a6)
+    move.w      #PLAYER_MOVEMENT_STATE_AIRBORNE,actor.movement_state(a6)
+    bra         .SpecificDamageChecksOver
+.DamageAppliedEnemy
+    move.w      #ENEMY_INV_STATE_DURATION,actor.inv_timer(a6)
+    move.w      #20,actor.velocity_x(a6)
+    move.w      #-60,actor.velocity_y(a6)
+
+.SpecificDamageChecksOver
+    cmpi        #0,d3
+    ble         .HealthBelowzero
+    bra         .Return
+.HealthBelowzero
+    bsr         DespawnActor
+    move.w      #ACTOR_STATE_DEAD,actor.state(a6)
+    move.w      #PLAYER_RESPAWN_DURATION,actor.respawn_timer(a6)
+    cmpi        #ACTOR_TYPE_ENEMY,actor.type(a6)
+    beq         .IsEnemyTypeDead
+    bra         .Return
+.IsEnemyTypeDead
+    move.w      #ACTOR_STATE_INACTIVE,actor.state(a6)
+    move.w      #123,d0
+    bsr         IncreaseScore
+.Return
+    movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
     rts
