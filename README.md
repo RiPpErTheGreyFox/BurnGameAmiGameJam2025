@@ -66,7 +66,7 @@ Create a title screen that allows player selection
 
 Wednesday to-do list:
 *Remove the ground detection and just hit it with a flat plane (for performance)
-Add a second enemy type with different graphics and behaviours
+*Add a second enemy type with different graphics and behaviours
 *Add a knockback state to enemies and players
 *Add a flashing state to enemies and players
 *Add a small invulnerability timer to enemies and players

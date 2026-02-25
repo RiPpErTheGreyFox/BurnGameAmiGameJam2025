@@ -33,6 +33,7 @@ ENEMY_STARTING_HEALTH           equ 10
 ENEMY_STARTING_DAMAGE           equ 10
 ENEMY_SUBTYPE_NORMAL            equ 0
 ENEMY_SUBTYPE_WANDERER          equ 1
+ENEMY_WANDER_TIMER              equ 150
 ;-------- Data Structures -----
 
 ;----------- Variables --------
@@ -97,20 +98,49 @@ ProcessEnemyAI:
     movem.l     d0-a6,-(sp)
     ; check if we've hit the left wall
     cmpi        #16,actor.x(a6)
-    ble         .respawnEnemy
-    bra         .keepgoingleft
-.respawnEnemy
+    ble         .RespawnEnemy
+    cmpi        #ENEMY_SUBTYPE_NORMAL,actor.fire_type(a6)
+    beq         .NormalAIBehaviour
+    cmpi        #ENEMY_SUBTYPE_WANDERER,actor.fire_type(a6)
+    beq         .WandererAIBehaviour
+.RespawnEnemy
     move.w      #SCREEN_BOUNDARY_MAX_X-ENEMY_WIDTH,d0
     move.w      #ENEMY_STARTING_POSY,d1
     bsr         SetActorPosition
 
-.keepgoingleft:
+.NormalAIBehaviour:
     ; if so, respawn, otherwise keep going left
     ; using a variant of AdjustXVelocity
     move.w      #-1,d0
     bsr         AdjustXVelocityEnemy
 
     movem.l     (sp)+,d0-a6 
+    rts
+.WandererAIBehaviour:
+    ; use actor.fire_timer as a counter
+    ;if(actor.fire_delay == 1) then move left else right
+    ;decrement timer, flip fire_delay when timer is zero
+.DecrementTimer
+    subi        #1,actor.fire_timer(a6)
+    cmp         #0,actor.fire_timer(a6)
+    beq         .FlipDirection
+    bra         .MoveCheck
+.FlipDirection
+    not.w       actor.fire_delay(a6)
+    move.w      #ENEMY_WANDER_TIMER,actor.fire_timer(a6)            ;actor.fire_timer
+.MoveCheck
+    cmpi        #1,actor.fire_delay(a6)
+    beq         .MoveLeft
+.MoveRight
+    move.w      #1,d0
+    bsr         AdjustXVelocityEnemy
+    bra         .Return
+.MoveLeft
+    move.w      #-1,d0
+    bsr         AdjustXVelocityEnemy
+    bra         .Return
+.Return
+    movem.l     (sp)+,d0-a6
     rts
 
 ; function which checks to see if enemies have run into players or not
@@ -237,8 +267,8 @@ InitialiseEnemy:
     move.w      #ACTOR_TYPE_ENEMY,actor.type(a6)                    ;actor.type
     move.w      #ENEMY_STARTING_HEALTH,actor.health(a6)             ;actor.health
     move.w      #0,actor.jump_decel_timer(a6)                       ;actor.jump_decel_timer
-    move.w      #0,actor.fire_timer(a6)                             ;actor.fire_timer      
-    move.w      #BASE_FIRE_INTERVAL,actor.fire_delay(a6)            ;actor.fire_delay      
+    move.w      #ENEMY_WANDER_TIMER+20,actor.fire_timer(a6)         ;actor.fire_timer      
+    move.w      #1,actor.fire_delay(a6)                             ;actor.fire_delay      
     move.w      #ENEMY_SUBTYPE_NORMAL,actor.fire_type(a6)           ;actor.fire_type       
     move.l      #0,actor.controller_addr(a6)                        ;actor.controller_addr
     move.l      #0,actor.sprite_addr(a6)                            ;sprite_addr 
@@ -289,54 +319,57 @@ SpawnEnemy:
     cmpi.l      #0,d2
     beq         .spawnFailed
 .spawnSuccess:
-    move.w      d0,actor.x(a6)                                          ;actor.x               
-    move.w      #0,actor.subpixel_x(a6)                                 ;actor.subpixel_x      
-    move.w      d1,actor.y(a6)                                          ;actor.y               
-    move.w      #0,actor.subpixel_y(a6)                                 ;actor.subpixel_y      
-    move.w      #0,actor.velocity_x(a6)                                 ;actor.velocity_x      
-    move.w      #0,actor.velocity_y(a6)                                 ;actor.velocity_y
+    move.w      d0,actor.x(a6)                                      ;actor.x               
+    move.w      #0,actor.subpixel_x(a6)                             ;actor.subpixel_x      
+    move.w      d1,actor.y(a6)                                      ;actor.y               
+    move.w      #0,actor.subpixel_y(a6)                             ;actor.subpixel_y      
+    move.w      #0,actor.velocity_x(a6)                             ;actor.velocity_x      
+    move.w      #0,actor.velocity_y(a6)                             ;actor.velocity_y
     bsr         GetRandomNumber
     move.b      prng_number,d2
-    andi.w      #%1,d2                                                  ;random number between 0 and 1
-    move.w      d2,actor.current_frame(a6)                              ;actor.current_frame   
-    move.w      #ENEMY_ANIM_IDLE,actor.current_anim(a6)                 ;actor.current_anim
+    andi.w      #%1,d2                                              ;random number between 0 and 1
+    move.w      d2,actor.current_frame(a6)                          ;actor.current_frame   
+    move.w      #ENEMY_ANIM_IDLE,actor.current_anim(a6)             ;actor.current_anim
     move.w      actor.width(a6),d2
     move.w      actor.height(a6),d3
-    lsr.w       d2                                                      ; divide width and height by 2
+    lsr.w       d2                                                  ; divide width and height by 2
     lsr.w       d3
     add.w       d2,d0
     add.w       d3,d1
-    move.w      d0,actor.x_middle(a6)                                   ;actor.x_middle
-    move.w      d1,actor.y_middle(a6)                                   ;actor.y_middle
-    move.w      #ACTOR_STATE_ACTIVE,actor.state(a6)                     ;actor.state           
+    move.w      d0,actor.x_middle(a6)                               ;actor.x_middle
+    move.w      d1,actor.y_middle(a6)                               ;actor.y_middle
+    move.w      #ACTOR_STATE_ACTIVE,actor.state(a6)                 ;actor.state           
     move.w      #ENEMY_MOVEMENT_STATE_NORMAL,actor.movement_state(a6)   ;actor.movement_state
     ; get a random number for the frame timer
     bsr         GetRandomNumber
     move.b      prng_number,d2
-    andi.w      #%111,d2                                                ;random number between 1 and 8
+    andi.w      #%111,d2                                            ;random number between 1 and 8
     addq.b      #1,d2  
-    move.w      d2,actor.anim_timer(a6)                                 ;actor.anim_timer      
-    move.w      #0,actor.inv_timer(a6)                                  ;actor.inv_timer     
-    move.w      #1,actor.visible(a6)                                    ;actor.visible 
-    move.w      #ENEMY_STARTING_HEALTH,actor.health(a6)                 ;actor.health        
-    move.w      #0,actor.jump_decel_timer(a6)                           ;actor.jump_decel_timer
-    move.w      #0,actor.fire_timer(a6)                                 ;actor.fire_timer
+    move.w      d2,actor.anim_timer(a6)                             ;actor.anim_timer      
+    move.w      #0,actor.inv_timer(a6)                              ;actor.inv_timer     
+    move.w      #1,actor.visible(a6)                                ;actor.visible 
+    move.w      #ENEMY_STARTING_HEALTH,actor.health(a6)             ;actor.health        
+    move.w      #0,actor.jump_decel_timer(a6)                       ;actor.jump_decel_timer
+    move.w      #ENEMY_WANDER_TIMER+20,actor.fire_timer(a6)         ;actor.fire_timer      
+    move.w      #1,actor.fire_delay(a6)                             ;actor.fire_delay  
     ; get a random number for the enemy type
     bsr         GetRandomNumber
     move.b      prng_number,d2
-    andi.w      #%1,d2                                                  ; random number between 0 and 1
+    andi.w      #%1,d2                                              ; random number between 0 and 1
     move.w      d2,actor.fire_type(a6)
     cmpi        #ENEMY_SUBTYPE_NORMAL,actor.fire_type(a6)
     beq         .NormalEnemySpawn
     cmpi        #ENEMY_SUBTYPE_WANDERER,actor.fire_type(a6)
     beq         .WandererEnemySpawn
 .NormalEnemySpawn      
-    move.l      #enemy_gfx,actor.bobdata(a6)                       ;actor.bobdata
-    move.l      #enemy_gfx_flip,actor.bobdata_flip(a6)             ;actor.bobdata_flip          
+    move.w      #ENEMY_SUBTYPE_NORMAL,actor.fire_type(a6)
+    move.l      #enemy_gfx,actor.bobdata(a6)                        ;actor.bobdata
+    move.l      #enemy_gfx_flip,actor.bobdata_flip(a6)              ;actor.bobdata_flip          
     move.l      #enemy_mask,actor.mask(a6)                          ;actor.mask
     move.l      #enemy_mask_flip,actor.mask_flip(a6)                ;actor.bobdata_flip
     bra         .Return
 .WandererEnemySpawn      
+    move.w      #ENEMY_SUBTYPE_WANDERER,actor.fire_type(a6)
     move.l      #enemy2_gfx,actor.bobdata(a6)                       ;actor.bobdata
     move.l      #enemy2_gfx_flip,actor.bobdata_flip(a6)             ;actor.bobdata_flip          
     move.l      #enemy2_mask,actor.mask(a6)                         ;actor.mask
