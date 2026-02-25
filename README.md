@@ -71,7 +71,7 @@ Add a second enemy type with different graphics and behaviours
 *Add a flashing state to enemies and players
 *Add a small invulnerability timer to enemies and players
 *Add health to players and enemies
-Adapt a drawing routine for drawing health bars (use the CPU like with font, forget the blitter because of how weirdly shaped they will be)
+*Adapt a drawing routine for drawing health bars (use the CPU like with font, forget the blitter because of how weirdly shaped they will be)
 *Update string renderer to render all characters in the topaz font
 
 

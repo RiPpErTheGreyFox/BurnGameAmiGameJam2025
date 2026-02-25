@@ -237,6 +237,14 @@ DrawHUD:
     move.w      #192+9+16,d4
     bsr         DrawString
 
+    move.w      #120,d3
+    move.w      #192+9+32,d4
+    move.w      #12,d5
+    bsr         ClearBarHUD
+    move.w      actor.health(a6),d5
+    lsr.w       #3,d5                                               ; divide by 8 to get a rough level of health
+    bsr         DrawBarHUD
+
     movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
     rts
 

@@ -79,6 +79,101 @@ DrawString:
     movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
     rts
 
+; Draws a section of a bar, 8 pixels wide onto both buffers, intended for use for HUD stuff
+; @params: d1.l - destination bitplane address offset
+DrawBarSegment:
+    movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
+
+    lea         dbuffer1,a1                                         ; draw buffer addresses
+    lea         dbuffer2,a2
+    adda.l      d1,a1
+    adda.l      d1,a2
+
+    moveq       #16-1,d2
+.loop:
+    move.b      #255,(a1)                                           ; copies a row of 8 px to bitplane
+    move.b      #255,(a2)
+    add.l       #DISPLAY_ROW_SIZE,a1                                ; go to the next row of the bitplane
+    add.l       #DISPLAY_ROW_SIZE,a2
+    dbra        d2,.loop
+
+    movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
+    rts
+
+; draws a bar out of 8px segments
+; @params: a2 - address of the string, zero terminated
+; @params: d3.w - x coordinates of where to draw the string
+; @params: d4.w - y coordinates where to draw the string
+; @params: d5.w - number of bar segments to draw (length in 8 pixel chunks)
+DrawBarHUD:
+    movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
+
+    ; calculates the destination address on the bitplane
+    move.l      #0,a1                                               ; where to draw
+    mulu.w      #DISPLAY_ROW_SIZE,d4                              
+    add.l       d4,a1                                               ; adds offset_y to bitplane address
+    lsr.w       #3,d3                                               ; offset_x = x/8
+    and.l       #$0000FFFF,d3                                       ; clears the high word of d3
+    add.l       d3,a1                                               ; adds offset_x to bitplane address
+    move.l      a1,d1
+
+    ; for each bar segment to be drawn
+.loop:
+    bsr         DrawBarSegment                                      ; else draws the character
+    add.l       #1,d1                                               ; moves 8 pixel to the right
+    dbra        d5,.loop                                               ; repeats the loop
+
+.return:
+    movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
+    rts
+
+; Clears a section of a bar, 8 pixels wide onto both buffers, intended for use for HUD stuff
+; @params: d1.l - destination bitplane address offset
+ClearBarSegment:
+    movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
+
+    lea         dbuffer1,a1                                         ; draw buffer addresses
+    lea         dbuffer2,a2
+    adda.l      d1,a1
+    adda.l      d1,a2
+
+    moveq       #16-1,d2
+.loop:
+    move.b      #0,(a1)                                           ; copies a row of 8 px to bitplane
+    move.b      #0,(a2)
+    add.l       #DISPLAY_ROW_SIZE,a1                                ; go to the next row of the bitplane
+    add.l       #DISPLAY_ROW_SIZE,a2
+    dbra        d2,.loop
+
+    movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
+    rts
+
+; Clears out the HUD area and resets it back to black
+; @params: d3.w - x coordinates of where to draw the string
+; @params: d4.w - y coordinates where to draw the string
+; @params: d5.w - number of bar segments to draw (length in 8 pixel chunks)
+ClearBarHUD:
+    movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
+
+    ; calculates the destination address on the bitplane
+    move.l      #0,a1                                               ; where to draw
+    mulu.w      #DISPLAY_ROW_SIZE,d4                              
+    add.l       d4,a1                                               ; adds offset_y to bitplane address
+    lsr.w       #3,d3                                               ; offset_x = x/8
+    and.l       #$0000FFFF,d3                                       ; clears the high word of d3
+    add.l       d3,a1                                               ; adds offset_x to bitplane address
+    move.l      a1,d1
+
+    ; for each bar segment to be drawn
+.loop:
+    bsr         ClearBarSegment                                      ; else draws the character
+    add.l       #1,d1                                               ; moves 8 pixel to the right
+    dbra        d5,.loop                                               ; repeats the loop
+
+.return:
+    movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
+    rts
+
 ; Convert a 16-bit number into a string
 ; @params: d0.w - 16 bit number
 ; @params: a0 - address of the output string
