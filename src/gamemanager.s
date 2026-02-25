@@ -55,7 +55,7 @@ current_wave_timer      ds.w        1                       ; amount of frames l
 current_wave_number     ds.w        1                       ; number of waves of enemies to spawn
 current_waypoint_addr   ds.l        1                       ; pointer to the current waypoint
 
-test_string             dc.b        "0123456789",0,0
+test_string             dc.b        "TESTING",0,0
 temp_string            dcb.b       8,'0'
 
 ;---------- Subroutines -------
@@ -211,6 +211,10 @@ DrawHUD:
     move.w      #192+9,d4
     bsr         DrawString
 
+    lea         test_string,a2
+    move.w      #120,d3
+    move.w      #192+9,d4
+    bsr         DrawString
     
     lea         gamestate_array,a6
     move.w      gamestate.lives_remaining(a6),d0

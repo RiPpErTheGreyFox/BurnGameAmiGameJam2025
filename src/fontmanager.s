@@ -24,8 +24,18 @@ DrawChar:
     sub.b       #48,d0
     ; clears the high byte of d0 as it's unused
     and.w       #$00FF,d0
+    cmpi        #0,d0
+    beq         .CharCodeIsZero
     ; calculates the address of the character within the font spritesheet
+    ; with an exception if character code #58 or above has been passed in
+    move.w      d0,d1
+    ext.l       d1
+    divu        #10,d1
+    and.l       #$0000FFFF,d1                                       ; remove the remainder
+    mulu        #15*10,d1
+    add.w       d1,a0
     add.w       d0,a0
+.CharCodeIsZero:
     ; copies the character data to the desitnation bitplane
     moveq       #16-1,d2
 .loop:
