@@ -74,6 +74,20 @@ Wednesday to-do list:
 *Adapt a drawing routine for drawing health bars (use the CPU like with font, forget the blitter because of how weirdly shaped they will be)
 *Update string renderer to render all characters in the topaz font
 
+Final day to-do list:
+Title screen with keyboard stuff to allow 1 or 2 players
+Moving onto the game scene dependant on that
+Update level to be more interesting
+Rebalance game at 25hz with half frame time enabled and platforms reenabled
+Add new enemy spawns (maybe set them to multiple types? Dunno)
+Have a game-over when running out of lives
+Update HUD to actually make sense
+Package and test on the 512kb chipmem A500 as that's the target
+Remember that animation system only allows for same number of frames in all animations
+Add jumping animation that overrides anything else
+Art pass on everything (leave until last to ensure most amount of time is spent on everything else, rushed art > not working game)
+Package and test on the 512kb chipmem A500 again after new art (don't go nuts)
+Get back to work on gameboy game any time permitting (or just play trains idk)
 
 Stretch goals:
 Multiple players, multiple characters, XP system for the run, bosses, minibosses, multiple enemy types, multiple levels, scrolling levels, using copper to draw high-res score/info at the top of the screen, animated level tile sets, weapon pickups, health pickups, pop ups with dialogue, music, sound effects, NTSC support
