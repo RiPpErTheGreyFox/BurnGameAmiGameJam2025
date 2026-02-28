@@ -205,6 +205,80 @@ IsPointWithinEntity:
 
 ;---------- Interrupt Functions ----------
 
+; initialises the keyboard input and installs the interrupt routines
+InitialiseKeyboard:
+
+    lea         CIAA,a0
+
+    ; disable all CIAA IRQs
+    move.b      #%01111111,CIAICR(a0)
+
+    ; renable only keyboard IRQ
+    ;             76543210
+    move.b      #%10001000,CIAICR(a0)
+
+    ; install the levl 2 keyboard interrupt routine
+    move.l      #KeyboardInterrupt,$68
+
+    ; enable keyboard interrupts (bit 3)
+    ;           ; 5432109876543210
+    move.w      #%1100000000001000,INTENA(a5)
+
+    rts
+
+; Keyboard interrupt routine
+KeyboardInterrupt:
+    movem.l     d0-a6,-(sp)
+    lea         CIAA,a0
+    ; reading the icr we all cause its reset, so the int is cancelled as in intreq
+    move.b      CIAICR(a0),d0
+    ; if bit IR = 0, returns
+    btst.l      #7,d0
+    beq         .return
+    ; if bit SP = 0, returns
+    btst.l      #3,d0
+    beq         .return
+    ; reads the INTENAR register
+    move.w      INTENAR(a5),d0
+    ; if bit MASTER = 0, returns
+    btst.l      #14,d0
+    beq         .return
+    ; if bit 3 (SP) = 0, returns
+    and.w       INTREQR(a5),d0
+    btst.l      #3,d0
+    beq         .return
+    ; reads the key pressed on the keyboard from CIAA serial register
+    moveq       #0,d0
+    move.b      CIASDR(a0),d0
+    ; inverts all the bits
+    not.b       d0
+    ; rotates right
+    ror.b       #1,d0
+    ; save into the variable
+    move.b      d0,current_keyboard_key
+    ; set the KDAT line to confirm that we have received the character
+    bset.b      #6,CIACRA(a0)
+    move.b      #$ff,CIASDR(a0)
+    ; wait 90 microseconds (4 lines)
+    moveq       #4-1,d0
+    .waitlines:
+    ; reads the actual raster line
+    move.b      VHPOSR(a5),d1
+    .stepline:
+    ; waits a line
+    cmp.b       VHPOSR(a5),d1
+    beq         .stepline
+    ; waits other lines
+    dbra        d0,.waitlines
+    ; clears KDAT line to enable input mode
+    bclr.b      #6,CIACRA(a0)
+
+.return:
+    ; clears interrupt request
+    move.w      #%1000,INTREQ(a5)
+    movem.l     (sp)+,d0-a6
+    rte
+
 ; TODO: expand this to allow any channel interrupt to be enabled
 EnableAudioChannel0Interrupt:
     bsr         WaitCIABTA

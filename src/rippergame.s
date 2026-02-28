@@ -44,14 +44,13 @@ mainloop:
     bsr         DrawEnemies
     bsr         DrawProjectiles
 
-;    bsr         isConfirmPressed        ; is confirm pressed?
-    lea         joystick1_instance,a6
-    move.w      joystick.button1(a6),d0
-    btst        #0,d0
+
+    ; quit on Q being pressed
+    cmp.b       #$10,current_keyboard_key
 
 ;    bsr         StopAllSounds
-    beq         mainloop
-    bsr         mainloop                ; DEBUG, don't quit the game when debugging
+    bne         mainloop
+    ;bsr         mainloop                ; DEBUG, don't quit the game when debugging
 
     bsr         shutdown
     rts
@@ -61,6 +60,7 @@ init:
     bsr         LoadPalette
     bsr         InitBPLPointers
     bsr         InitSpritePointers
+    bsr         InitialiseKeyboard
     rts
     
 shutdown:

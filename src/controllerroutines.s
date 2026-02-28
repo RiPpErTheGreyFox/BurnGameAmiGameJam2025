@@ -16,6 +16,9 @@ joystick.length         rs.b 0
 ;----------- Variables --------
 joystick1_instance      dc.w 0,0,0,0,0,0
 joystick2_instance      dc.w 0,0,0,0,0,0
+
+current_keyboard_key    dc.b 0 ; last key pressed on the keyboard
+    even
 ;---------- Subroutines -------
     SECTION CODE
 
