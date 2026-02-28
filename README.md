@@ -89,6 +89,7 @@ Package and test on the 512kb chipmem A500 as that's the target
 Remember that animation system only allows for same number of frames in all animations
 Add jumping animation that overrides anything else
 Art pass on everything (leave until last to ensure most amount of time is spent on everything else, rushed art > not working game)
+Something is horribly wrong with the keyboard routines and it is glitchy on AOS 3.2.1 and outright destructive on AOS 1.3
 Package and test on the 512kb chipmem A500 again after new art (don't go nuts)
 Get back to work on gameboy game any time permitting (or just play trains idk)
 

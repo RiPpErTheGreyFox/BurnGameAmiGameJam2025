@@ -23,6 +23,7 @@ RestartGame:
     bsr         PlayerSelectionMenu
 
 mainloop:
+    bsr         ReadKeyboard
     bsr         WaitVBlank
     IFD         HALFFRAMERATE
     bsr         WaitVBlank
@@ -64,7 +65,7 @@ init:
     bsr         LoadPalette
     bsr         InitBPLPointers
     bsr         InitSpritePointers
-    bsr         InitialiseKeyboard
+    ;bsr         InitialiseKeyboard
     rts
     
 shutdown:
@@ -85,6 +86,8 @@ GameOverState:
     rts
 
 PlayerSelectionMenu:
+    ; debug test
+    ;bra         .OnePlayer
     ; draw onto the screen the text for player selection
     ; Press 1 for one player mode (joystick in port 2)
     ; Press 2 for two player mode (joysticks in ports 1 and 2)
@@ -109,6 +112,7 @@ PlayerSelectionMenu:
     bsr         DrawString
 
 .loop
+    bsr         ReadKeyboard
     ; draw the screen to keep everything alive
     bsr         WaitVBlank
     ; wait for pressing of 1 or 2

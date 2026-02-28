@@ -203,6 +203,34 @@ IsPointWithinEntity:
     move.w      #0,d2
     rts
 
+; reads the keyboard and places the result into current_key_pressed
+ReadKeyboard:
+    lea         CIAA,a0                                     ; CIAA base
+    moveq       #0,d0                                       ; clear the temp register for the keycode
+
+    move.b      CIASDR(a0),d0                               ; read keycode from CIAA_SDR which is input from keyboard
+    bset.b      #$06,CIACRA(a0)                             ; SET CIA A CRA SP Mode bit 6 to OUTPUT in preparation for handshake
+    andi.b      #$F6,CIACRA(a0)                             ; prepare timer A for handshake timeout: clear bits 0 start and 3 runmode (continuous)
+    move.b      #$03,CIATALO(a0)                            ; CIAA TIMER A LOW
+    move.b      #$00,CIATAHI(a0)                            ; CIAA TIMER A HIGH
+    ori.b       #$01,CIACRA(a0)                             ; Set CIACRA bit 0 start to start timer A
+    move.b      #$00,CIASDR(a0)                             ; wirte to SDR to begin serial port transmission
+
+.wait
+    btst        #$03,CIAICR(a0)                             ; is CIAA_ICR SP bit set
+    cmpi.b      #$F8,CIAICR(a0)
+    beq.s       .wait                                       ; loop until serial port interrupt is set
+
+    move.w      #$08,INTREQ(a5)                             ; clear bit 3 PORTS (I/O ports and timers)
+    bclr.b      #$06,CIACRA(a0)                             ; clear CIAA_CRA SPMODE bit 6 to Input
+    not.b       d0                                          ; decode the keycode
+    ror.b       #1,d0
+
+    clr.w       current_keyboard_key
+    move.b      d0,current_keyboard_key
+
+    rts
+
 ;---------- Interrupt Functions ----------
 
 ; initialises the keyboard input and installs the interrupt routines
