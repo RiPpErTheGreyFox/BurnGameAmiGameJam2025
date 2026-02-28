@@ -44,6 +44,7 @@ VIEWPORT_HEIGHT             EQU 192
 VIEWPORT_WIDTH              EQU 320
 SCROLL_SPEED                EQU 2*FRAMEMULTIPLIER
 SCROLL_THRESHOLD_X_RIGHT    EQU 120
+DEFAULT_STARTING_LIVES      EQU 5
 
 ;---------- Variables ---------
 camera_x            dc.w 0*16

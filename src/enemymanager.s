@@ -30,7 +30,7 @@ ENEMY_MAX_ANIM_DELAY            equ 10/FRAMEMULTIPLIER      ; delay between two 
 ENEMY_INV_STATE_DURATION        equ (50)/FRAMEMULTIPLIER    ; duration of the invincible state (in frames)
 ENEMY_FLASH_DURATION            equ 3                       ; flashing duration (in frames)
 ENEMY_STARTING_HEALTH           equ 10
-ENEMY_STARTING_DAMAGE           equ 10
+ENEMY_STARTING_DAMAGE           equ 25
 ENEMY_SUBTYPE_NORMAL            equ 0
 ENEMY_SUBTYPE_WANDERER          equ 1
 ENEMY_WANDER_TIMER              equ 150

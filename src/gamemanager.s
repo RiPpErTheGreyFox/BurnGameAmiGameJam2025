@@ -56,6 +56,7 @@ current_wave_number     ds.w        1                       ; number of waves of
 current_waypoint_addr   ds.l        1                       ; pointer to the current waypoint
 
 current_player_count    ds.w        1                       ; contains the current player count
+current_game_is_over    ds.w        1                       ; contains 0 for not game over, 1 for game over
 
 test_string             dc.b        "TESTING",0,0
 player_select_1_str     dc.b        "PRESS 1: ONE PLAYER",0,0
@@ -66,6 +67,7 @@ lives_string            dc.b        "LIVES: ",0,0
 score_string            dc.b        "SCORE: ",0,0
 player1_name_string     dc.b        "PLAYER 1: ",0,0
 player2_name_string     dc.b        "PLAYER 2: ",0,0
+game_over_string        dc.b        "GAME OVER",0
 temp_string             dcb.b       8,'0'
 
 ;---------- Subroutines -------
@@ -81,6 +83,8 @@ GameManagerStart:
     move.w      #0,current_wave_number
     move.l      gamestate.waypointarray(a6),a4
     move.l      a4,current_waypoint_addr
+
+    move.w      #0,current_game_is_over
 
     rts
 
@@ -191,15 +195,66 @@ IncreaseScore:
     movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
     rts
 
-; Decreases lives by one and forces a HUD update
-DecreaseLives:
+; Reset lives to the default amount, accounting for player count
+ResetLives:
     movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
+
+    lea         gamestate_array,a6
+    move.w      #DEFAULT_STARTING_LIVES,d0
+    add         current_player_count,d0
+    move.w      d0,gamestate.lives_remaining(a6)
+
+
+    movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
+    rts
+
+; Decreases lives by one and forces a HUD update
+; @clobbers: d1, a6
+; @returns: d1 - 1 on a success, 0 on a failure
+DecreaseLives:
+    movem.l     a6,-(sp)
     lea         gamestate_array,a6
     move.w      gamestate.lives_remaining(a6),d1
+    cmpi        #0,d1
+    bgt         .Success
+.Failure
+    move        #0,d1
+    movem.l     (sp)+,a6
+    rts
+.Success
     subq.w      #1,d1
     move.w      d1,gamestate.lives_remaining(a6)
     bsr         DrawHUD
+    move.w      #1,d1
+    movem.l     (sp)+,a6
+    rts
+
+; Checks if lives are out and all players are dead or inactive
+; if so, throws us to the gameover state
+CheckForGameOver:
+    movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
+    move.w      #1,d1                                               ; d1 is the gameover flag, start it true
+                                                                    ; set if false through DQ'ers
+    lea         gamestate_array,a6
+    move.w      gamestate.lives_remaining(a6),d0
+    cmpi        #0,d0
+    bgt         .NotGameOver
+    ; if no lives remaining, check if both players dead/inactive
+    lea         pl_instance1,a6
+    cmpi        #ACTOR_STATE_ACTIVE,actor.state(a6)
+    beq         .NotGameOver
+
+    lea         pl_instance2,a6
+    cmpi        #ACTOR_STATE_ACTIVE,actor.state(a6)
+    beq         .NotGameOver
+
+.return
+    move.w      d1,current_game_is_over
     movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
+    rts
+.NotGameOver
+    movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
+    move.w      #0,current_game_is_over
     rts
 
 ; HUD Draw

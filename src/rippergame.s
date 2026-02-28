@@ -5,7 +5,8 @@ main:
     nop
 
     bsr         init
-    
+
+RestartGame:
     move.w      camera_x,d0
     lsr.w       #4,d0
     move.w      d0,map_ptr
@@ -13,11 +14,6 @@ main:
     move.w      #16,bgnd_x
     move.w      #0,current_player_count
 
-    ; play the test sound to make sure these functions are working
-    lea         TESTSAMPLE,a6
-    move.w      #TESTSAMPLE_LEN/2,d0
-    move.w      0,d1
-    bsr         PlaySampleOnChannel
     bsr         PlayerControllerStart
     bsr         EnemyManagerStart
     bsr         ProjectileManagerStart
@@ -47,6 +43,9 @@ mainloop:
     bsr         DrawEnemies
     bsr         DrawProjectiles
 
+    ; are we in game over?
+    cmpi        #1,current_game_is_over
+    beq         .GameOver
 
     ; quit on Q being pressed
     cmp.b       #$10,current_keyboard_key
@@ -55,6 +54,8 @@ mainloop:
     bne         mainloop
     ;bsr         mainloop                ; DEBUG, don't quit the game when debugging
 
+.GameOver
+    bsr         GameOverState
     bsr         shutdown
     rts
 
@@ -68,6 +69,19 @@ init:
     
 shutdown:
     bsr         ReleaseSystem
+    rts
+
+GameOverState:
+    lea         game_over_string,a2
+    move.w      #16,d3
+    move.w      #192+9,d4
+    bsr         DrawString
+
+    move.w      #254,d7
+.GameOverLoop
+    bsr         WaitVBlank
+    dbra        d7,.GameOverLoop
+
     rts
 
 PlayerSelectionMenu:
@@ -115,6 +129,7 @@ PlayerSelectionMenu:
     ; set variables so spawn players will now spawn both players
     move.w      #2,current_player_count
 .SpawnPlayers
+    bsr         ResetLives
     bsr         SpawnPlayers
 .return
     rts

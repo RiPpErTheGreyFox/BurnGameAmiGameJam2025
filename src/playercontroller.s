@@ -66,8 +66,8 @@ PlayerControllerStart:
 SpawnPlayers:
 .OnePlayerOnly
     lea         pl_instance2,a6
-    move.w      #36,actor.x(a6)                                     ; offset it a little
     bsr         SpawnPlayer
+    move.w      #48,actor.x(a6)                                     ; offset it a little
     cmpi        #2,current_player_count
     beq         .BothPlayers
     rts
@@ -122,7 +122,11 @@ InitialisePlayer:
 ; @params: a6 - player actor to spawn
 SpawnPlayer:
 
+    bsr         DecreaseLives
+    cmpi        #0,d1                                               ; check the return register
+    beq         .Failure
     
+.Success
     movem.l     d0-a6,-(sp)
     lea         PLAYERSPAWNSAMPLE,a6
     move.w      #PLAYERSPAWNSAMPLE_LEN/2,d0
@@ -154,14 +158,19 @@ SpawnPlayer:
     move.w      #PLAYER_MAX_ANIM_DELAY,actor.anim_timer(a6)         ;actor.anim_timer      
     move.w      #PLAYER_INV_STATE_DURATION,actor.inv_timer(a6)      ;actor.inv_timer
     move.w      #0,actor.respawn_timer(a6)                          ;actor.respawn_timer       
-    move.w      #PLAYER_FLASH_DURATION,actor.flash_timer(a6)        ;actor.flash_timer     
-    move.w      #1,actor.visible(a6)                                ;actor.visible
+    move.w      #PLAYER_FLASH_DURATION,actor.flash_timer(a6)        ;actor.flash_timer    
+    move.w      #1,actor.visible(a6)                                ;actor.visible 
     move.w      #PLAYER_STARTING_HEALTH,actor.health(a6)            ;actor.health
     move.w      #0,actor.jump_decel_timer(a6)                       ;actor.jump_decel_timer
     move.w      #0,actor.fire_timer(a6)                             ;actor.fire_timer
 
-    bsr         DecreaseLives
+    bsr         DrawHUD
 
+    rts
+.Failure
+    move.w      #ACTOR_STATE_INACTIVE,actor.state(a6)               ;actor.state    
+    move.w      #0,actor.visible(a6)                                ;actor.visible 
+    bsr         CheckForGameOver
     rts
 
 UpdatePlayers:
@@ -175,8 +184,8 @@ UpdatePlayers:
     bsr         ProcessActorMovement
     bsr         UpdateAnimation
     bsr         UpdateFireTimer
-    bsr         UpdateRespawnTimer
     bsr         UpdateInvulnerableTimer
+    bsr         UpdateRespawnTimer
     ; update and draw player 2
 .UpdatePlayer2
     lea         joystick2_instance,a4
@@ -187,8 +196,8 @@ UpdatePlayers:
     bsr         ProcessActorMovement
     bsr         UpdateAnimation
     bsr         UpdateFireTimer
-    bsr         UpdateRespawnTimer
     bsr         UpdateInvulnerableTimer
+    bsr         UpdateRespawnTimer
 
 .return
     rts
