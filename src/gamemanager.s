@@ -62,6 +62,10 @@ player_select_1_str     dc.b        "PRESS 1: ONE PLAYER",0,0
 player_select_1_str2    dc.b        "<JOYSTICK PORT 2>",0,0
 player_select_2_str     dc.b        "PRESS 2: TWO PLAYER",0,0
 player_select_2_str2    dc.b        "<JOYSTICK PORTS 1\2>",0,0
+lives_string            dc.b        "LIVES: ",0,0
+score_string            dc.b        "SCORE: ",0,0
+player1_name_string     dc.b        "PLAYER 1: ",0,0
+player2_name_string     dc.b        "PLAYER 2: ",0,0
 temp_string             dcb.b       8,'0'
 
 ;---------- Subroutines -------
@@ -207,6 +211,7 @@ DrawHUD:
     movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
     ; blit the HUD to both buffers
 
+.DrawScore
     lea         gamestate_array,a6
     move.w      gamestate.current_score(a6),d0
     lea         temp_string,a0
@@ -217,11 +222,11 @@ DrawHUD:
     move.w      #192+9,d4
     bsr         DrawString
 
-    lea         test_string,a2
-    move.w      #120,d3
+    lea         score_string,a2
+    move.w      #224,d3
     move.w      #192+9,d4
     bsr         DrawString
-    
+.DrawLives
     lea         gamestate_array,a6
     move.w      gamestate.lives_remaining(a6),d0
     lea         temp_string,a0
@@ -231,26 +236,49 @@ DrawHUD:
     move.w      #280,d3
     move.w      #192+9+16,d4
     bsr         DrawString
-
-    ;debug player 2 health
-    lea         pl_instance2,a6
-    move.w      actor.health(a6),d0
-    lea         temp_string,a0
-    bsr         NumToString
-
-    lea         temp_string,a2
-    move.w      #120,d3
+    
+    lea         lives_string,a2
+    move.w      #224,d3
     move.w      #192+9+16,d4
     bsr         DrawString
+.DrawHealthBars
+    ;player 2 in code is player 1 in name
+    cmpi        #1,current_player_count
+    blt         .return
+    
+    lea         player1_name_string,a2
+    move.w      #16,d3
+    move.w      #192+9,d4
+    bsr         DrawString
 
-    move.w      #120,d3
-    move.w      #192+9+32,d4
+    lea         pl_instance2,a6
+    move.w      #16,d3
+    move.w      #192+9+16,d4
     move.w      #12,d5
     bsr         ClearBarHUD
     move.w      actor.health(a6),d5
-    lsr.w       #3,d5                                               ; divide by 8 to get a rough level of health
+    lsr.w       #4,d5                                               ; divide by 16 to get a rough level of health
     bsr         DrawBarHUD
 
+; if the player count is above 1, then draw the second bar
+    cmpi        #1,current_player_count
+    ble         .return
+
+    lea         player2_name_string,a2
+    move.w      #120,d3
+    move.w      #192+9,d4
+    bsr         DrawString
+
+    lea         pl_instance1,a6
+    move.w      #120,d3
+    move.w      #192+9+16,d4
+    move.w      #12,d5
+    bsr         ClearBarHUD
+    move.w      actor.health(a6),d5
+    lsr.w       #4,d5                                               ; divide by 16 to get a rough level of health
+    bsr         DrawBarHUD
+
+.return:
     movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
     rts
 

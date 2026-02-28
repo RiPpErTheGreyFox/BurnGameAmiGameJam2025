@@ -4,7 +4,6 @@ main:
     nop
     nop
 
-
     bsr         init
     
     move.w      camera_x,d0
@@ -12,6 +11,7 @@ main:
     move.w      d0,map_ptr
     bsr         InitBackground
     move.w      #16,bgnd_x
+    move.w      #0,current_player_count
 
     ; play the test sound to make sure these functions are working
     lea         TESTSAMPLE,a6
