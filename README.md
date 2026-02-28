@@ -57,11 +57,11 @@ Final stretch tasks:
     and healthbars
 *Make a drawn HUD that only redraws when updated
 *Create a text renderer that converts binary numbers to BCD and then draws them out using bobs
-Refine the HUD with some graphics
+*Refine the HUD with some graphics
 Queue up all required sounds and art to be integrated later in the week
 Redesign the level to make it slightly more interesting (cut elevation changes)
-Add health to enemies with knockback and players too
-Add an invulnerable state
+*Add health to enemies with knockback and players too
+*Add an invulnerable state
 Create a title screen that allows player selection
 
 Wednesday to-do list:
@@ -76,8 +76,8 @@ Wednesday to-do list:
 
 Final day to-do list:
 *Keyboard handling introduced
-Title screen with keyboard stuff to allow 1 or 2 players
-Moving onto the game scene dependant on that
+*Title screen with keyboard stuff to allow 1 or 2 players
+*Moving onto the game scene dependant on that
 Update level to be more interesting
 Rebalance game at 25hz with half frame time enabled and platforms reenabled
 Add new enemy spawns (maybe set them to multiple types? Dunno)

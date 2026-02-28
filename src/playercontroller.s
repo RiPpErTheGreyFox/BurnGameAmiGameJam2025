@@ -55,10 +55,24 @@ PlayerControllerStart:
     lea         pl_instance1,a6
     bsr         InitialisePlayer
     move.l      #joystick1_instance,actor.controller_addr(a6)       ; assign joystick 1 to player 1
-    bsr         SpawnPlayer
+    ;bsr         SpawnPlayer                                        ; leave the spawning to when the menu is complete
     lea         pl_instance2,a6
     bsr         InitialisePlayer
     move.l      #joystick2_instance,actor.controller_addr(a6)       ; assign joystick 2 to player 2
+    ;bsr         SpawnPlayer
+    rts
+
+    ; spawns the players based on the player count set by the menu
+SpawnPlayers:
+.OnePlayerOnly
+    lea         pl_instance2,a6
+    move.w      #36,actor.x(a6)                                     ; offset it a little
+    bsr         SpawnPlayer
+    cmpi        #2,current_player_count
+    beq         .BothPlayers
+    rts
+.BothPlayers
+    lea         pl_instance1,a6
     bsr         SpawnPlayer
     rts
 
@@ -143,17 +157,23 @@ SpawnPlayer:
 
 UpdatePlayers:
     ; update and draw player 1
+.UpdatePlayer1
     lea         joystick1_instance,a4
     lea         pl_instance1,a6
-    ;bsr         move_player_with_joystick
+    cmpi        #ACTOR_STATE_INACTIVE,actor.state(a6)
+    beq         .UpdatePlayer2
+    bsr         MovePlayerWithJoystick
     bsr         ProcessActorMovement
     bsr         UpdateAnimation
     bsr         UpdateFireTimer
     bsr         UpdateRespawnTimer
     bsr         UpdateInvulnerableTimer
     ; update and draw player 2
+.UpdatePlayer2
     lea         joystick2_instance,a4
     lea         pl_instance2,a6
+    cmpi        #ACTOR_STATE_INACTIVE,actor.state(a6)
+    beq         .return
     bsr         MovePlayerWithJoystick
     bsr         ProcessActorMovement
     bsr         UpdateAnimation
@@ -161,6 +181,7 @@ UpdatePlayers:
     bsr         UpdateRespawnTimer
     bsr         UpdateInvulnerableTimer
 
+.return
     rts
 
 DrawPlayers:

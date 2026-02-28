@@ -55,8 +55,14 @@ current_wave_timer      ds.w        1                       ; amount of frames l
 current_wave_number     ds.w        1                       ; number of waves of enemies to spawn
 current_waypoint_addr   ds.l        1                       ; pointer to the current waypoint
 
+current_player_count    ds.w        1                       ; contains the current player count
+
 test_string             dc.b        "TESTING",0,0
-temp_string            dcb.b       8,'0'
+player_select_1_str     dc.b        "PRESS 1: ONE PLAYER",0,0
+player_select_1_str2    dc.b        "<JOYSTICK PORT 2>",0,0
+player_select_2_str     dc.b        "PRESS 2: TWO PLAYER",0,0
+player_select_2_str2    dc.b        "<JOYSTICK PORTS 1\2>",0,0
+temp_string             dcb.b       8,'0'
 
 ;---------- Subroutines -------
     SECTION CODE

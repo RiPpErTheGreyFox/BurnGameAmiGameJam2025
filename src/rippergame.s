@@ -4,6 +4,7 @@ main:
     nop
     nop
 
+
     bsr         init
     
     move.w      camera_x,d0
@@ -22,6 +23,8 @@ main:
     bsr         ProjectileManagerStart
     bsr         GameManagerStart
     bsr         DrawHUD
+
+    bsr         PlayerSelectionMenu
 
 mainloop:
     bsr         WaitVBlank
@@ -66,6 +69,56 @@ init:
 shutdown:
     bsr         ReleaseSystem
     rts
+
+PlayerSelectionMenu:
+    ; draw onto the screen the text for player selection
+    ; Press 1 for one player mode (joystick in port 2)
+    ; Press 2 for two player mode (joysticks in ports 1 and 2)
+    lea         player_select_1_str,a2
+    move.w      #16,d3
+    move.w      #64,d4
+    bsr         DrawString
+
+    lea         player_select_1_str2,a2
+    move.w      #16,d3
+    move.w      #80,d4
+    bsr         DrawString
+
+    lea         player_select_2_str,a2
+    move.w      #16,d3
+    move.w      #112,d4
+    bsr         DrawString
+
+    lea         player_select_2_str2,a2
+    move.w      #16,d3
+    move.w      #128,d4
+    bsr         DrawString
+
+.loop
+    ; draw the screen to keep everything alive
+    bsr         WaitVBlank
+    ; wait for pressing of 1 or 2
+    cmp.b       #$01,current_keyboard_key
+    beq         .OnePlayer
+    cmp.b       #$1D,current_keyboard_key
+    beq         .OnePlayer
+    cmp.b       #$02,current_keyboard_key
+    beq         .TwoPlayer
+    cmp.b       #$1E,current_keyboard_key
+    beq         .TwoPlayer
+    bra         .loop
+.OnePlayer
+    ; set variables so spawn players can work appropriately
+    move.w      #1,current_player_count
+    bra         .SpawnPlayers
+.TwoPlayer
+    ; set variables so spawn players will now spawn both players
+    move.w      #2,current_player_count
+.SpawnPlayers
+    bsr         SpawnPlayers
+.return
+    rts
+
 ;---------- Includes ----------
             INCDIR          "include"
             INCLUDE         "hw.i"
