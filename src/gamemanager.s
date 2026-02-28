@@ -28,25 +28,75 @@ waypoint.length         rs.b        0
 
 ;----------- Variables --------
 gamestate_array         dc.w        0                       ; gamestate.curr_point
-                        dc.l        testwaypoint            ; gamestate.waypointarray
-                        dc.w        2                       ; gamestate.size_of_array
+                        dc.l        testwaypoint1           ; gamestate.waypointarray
+                        dc.w        9                       ; gamestate.size_of_array
                         dc.w        1                       ; gamestate.current_state
                         dc.w        0                       ; gamestate.current_score
                         dc.w        5                       ; gamestate.lives_remaining
 
-testwaypoint            dc.w        30                      ; waypoint.x_pos
+testwaypoint1           dc.w        36                      ; waypoint.x_pos
                         dc.w        0                       ; waypoint.triggered
                         dc.w        60/FRAMEMULTIPLIER      ; waypoint.respawn_delay
                         dc.w        180/FRAMEMULTIPLIER     ; waypoint.wave_timer
                         dc.w        1                       ; waypoint.wave_amount
-                        dc.w        1                       ; waypoint.num_of_waves
+                        dc.w        2                       ; waypoint.num_of_waves
 
 testwaypoint2           dc.w        60                      ; waypoint.x_pos
                         dc.w        0                       ; waypoint.triggered
                         dc.w        60/FRAMEMULTIPLIER      ; waypoint.respawn_delay
                         dc.w        180/FRAMEMULTIPLIER     ; waypoint.wave_timer
                         dc.w        2                       ; waypoint.wave_amount
+                        dc.w        1                       ; waypoint.num_of_waves
+
+testwaypoint3           dc.w        86                      ; waypoint.x_pos
+                        dc.w        0                       ; waypoint.triggered
+                        dc.w        30/FRAMEMULTIPLIER      ; waypoint.respawn_delay
+                        dc.w        60/FRAMEMULTIPLIER     ; waypoint.wave_timer
+                        dc.w        2                       ; waypoint.wave_amount
                         dc.w        2                       ; waypoint.num_of_waves
+
+testwaypoint4           dc.w        107                     ; waypoint.x_pos
+                        dc.w        0                       ; waypoint.triggered
+                        dc.w        60/FRAMEMULTIPLIER      ; waypoint.respawn_delay
+                        dc.w        180/FRAMEMULTIPLIER     ; waypoint.wave_timer
+                        dc.w        3                       ; waypoint.wave_amount
+                        dc.w        2                       ; waypoint.num_of_waves
+
+testwaypoint5           dc.w        136                     ; waypoint.x_pos
+                        dc.w        0                       ; waypoint.triggered
+                        dc.w        60/FRAMEMULTIPLIER      ; waypoint.respawn_delay
+                        dc.w        30/FRAMEMULTIPLIER     ; waypoint.wave_timer
+                        dc.w        1                       ; waypoint.wave_amount
+                        dc.w        5                       ; waypoint.num_of_waves
+
+testwaypoint6           dc.w        156                     ; waypoint.x_pos
+                        dc.w        0                       ; waypoint.triggered
+                        dc.w        60/FRAMEMULTIPLIER      ; waypoint.respawn_delay
+                        dc.w        180/FRAMEMULTIPLIER     ; waypoint.wave_timer
+                        dc.w        2                       ; waypoint.wave_amount
+                        dc.w        3                       ; waypoint.num_of_waves
+
+testwaypoint7           dc.w        176                     ; waypoint.x_pos
+                        dc.w        0                       ; waypoint.triggered
+                        dc.w        120/FRAMEMULTIPLIER     ; waypoint.respawn_delay
+                        dc.w        180/FRAMEMULTIPLIER     ; waypoint.wave_timer
+                        dc.w        2                       ; waypoint.wave_amount
+                        dc.w        2                       ; waypoint.num_of_waves
+
+testwaypoint8           dc.w        192                     ; waypoint.x_pos
+                        dc.w        0                       ; waypoint.triggered
+                        dc.w        60/FRAMEMULTIPLIER      ; waypoint.respawn_delay
+                        dc.w        360/FRAMEMULTIPLIER     ; waypoint.wave_timer
+                        dc.w        1                       ; waypoint.wave_amount
+                        dc.w        2                       ; waypoint.num_of_waves
+
+testwaypoint9           dc.w        223                     ; waypoint.x_pos
+                        dc.w        0                       ; waypoint.triggered
+                        dc.w        120/FRAMEMULTIPLIER     ; waypoint.respawn_delay
+                        dc.w        240/FRAMEMULTIPLIER     ; waypoint.wave_timer
+                        dc.w        5                       ; waypoint.wave_amount
+                        dc.w        3                       ; waypoint.num_of_waves
+
 
 screen_scroll_allowed   ds.w        1                       ; bool flag for if the screen scroll is paused or not
 current_respawn_timer   ds.w        1                       ; amount of frames left until next respawn
@@ -59,15 +109,15 @@ current_player_count    ds.w        1                       ; contains the curre
 current_game_is_over    ds.w        1                       ; contains 0 for not game over, 1 for game over
 
 test_string             dc.b        "TESTING",0,0
-player_select_1_str     dc.b        "PRESS 1: ONE PLAYER",0,0
-player_select_1_str2    dc.b        "<JOYSTICK PORT 2>",0,0
-player_select_2_str     dc.b        "PRESS 2: TWO PLAYER",0,0
+player_select_1_str     dc.b        "PRESSa1:aONEaPLAYER",0,0
+player_select_1_str2    dc.b        "<JOYSTICKaPORTa2>",0,0
+player_select_2_str     dc.b        "PRESSa2:aTWOaPLAYER",0,0
 player_select_2_str2    dc.b        "<JOYSTICK PORTS 1\2>",0,0
-lives_string            dc.b        "LIVES: ",0,0
-score_string            dc.b        "SCORE: ",0,0
-player1_name_string     dc.b        "PLAYER 1: ",0,0
-player2_name_string     dc.b        "PLAYER 2: ",0,0
-game_over_string        dc.b        "GAME OVER",0
+lives_string            dc.b        "LIVES:",0,0
+score_string            dc.b        "SCORE:",0,0
+player1_name_string     dc.b        "PLAYERa1:",0,0
+player2_name_string     dc.b        "PLAYERa2:",0,0
+game_over_string        dc.b        "GAMEaOVER",0
 temp_string             dcb.b       8,'0'
 
 ;---------- Subroutines -------
@@ -265,6 +315,16 @@ CheckForGameOver:
 DrawHUD:
     movem.l     d0-a6,-(sp)                                         ; copy registers onto the stack
     ; blit the HUD to both buffers
+
+    ;DEBUG STUFF
+    ;move.w      map_ptr,d0
+    ;lea         temp_string,a0
+    ;bsr         NumToString
+
+    ;lea         temp_string,a2
+    ;move.w      #16,d3
+    ;move.w      #192+32+9,d4
+    ;bsr         DrawString
 
 .DrawScore
     lea         gamestate_array,a6

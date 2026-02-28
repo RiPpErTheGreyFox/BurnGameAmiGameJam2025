@@ -357,7 +357,7 @@ SpawnEnemy:
     move.w      #1,actor.visible(a6)                                ;actor.visible 
     move.w      #ENEMY_STARTING_HEALTH,actor.health(a6)             ;actor.health        
     move.w      #0,actor.jump_decel_timer(a6)                       ;actor.jump_decel_timer
-    move.w      #ENEMY_WANDER_TIMER+20,actor.fire_timer(a6)         ;actor.fire_timer      
+    move.w      #ENEMY_WANDER_TIMER+80,actor.fire_timer(a6)         ;actor.fire_timer      
     move.w      #1,actor.fire_delay(a6)                             ;actor.fire_delay  
     ; get a random number for the enemy type
     bsr         GetRandomNumber

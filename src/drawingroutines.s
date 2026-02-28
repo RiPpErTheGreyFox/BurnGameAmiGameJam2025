@@ -485,7 +485,7 @@ hud_background_mask: incbin "assets/gfx/HUDNumberFont.mask"
     SECTION graphics_data,DATA_C            ; segment loaded in CHIP RAM
 
 tileset         incbin "assets/gfx/DemoLevel1_tileset.raw"
-palette         incbin "assets/gfx/testsprite.pal"
+palette         incbin "assets/gfx/DemoLevel1.pal"
 
 PLAYERGFX:
 player_gfx      incbin "assets/gfx/testsprite.raw"                      ; ship spritesheet 96x96, 3cols x 3rows, frame size: 32x32

@@ -138,7 +138,11 @@ CollisionCheckAtPoint:
 
     ;bsr         GetTileAddressAtPoint
 
-    ;cmpi        #1,d7                                               ; if tile = 1, we hit it
+    ;cmpi        #9,d7                                               ; if tile = 9, 10 or 11, we hit it
+    ;beq         .returntrue
+    ;cmpi        #10,d7
+    ;beq         .returntrue
+    ;cmpi        #11,d7
     ;beq         .returntrue
 
 .returnfalse:

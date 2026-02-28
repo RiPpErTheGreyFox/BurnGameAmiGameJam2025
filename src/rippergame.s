@@ -44,6 +44,9 @@ mainloop:
     bsr         DrawEnemies
     bsr         DrawProjectiles
 
+    ; DEBUG
+    ;bsr         DrawHUD
+
     ; are we in game over?
     cmpi        #1,current_game_is_over
     beq         .GameOver
