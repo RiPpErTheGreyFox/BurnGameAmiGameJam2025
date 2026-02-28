@@ -6,7 +6,7 @@ PLAYER_WIDTH                    equ 32                      ; width in pixels
 PLAYER_WIDTH_B                  equ (PLAYER_WIDTH/8)        ; width in bytes
 PLAYER_HEIGHT                   equ 32                      ; height in pixels
 PLAYER_STARTING_POSX            equ 16                      ; starting position
-PLAYER_STARTING_POSY            equ 32
+PLAYER_STARTING_POSY            equ 96
 PLAYER_MAXVELOCITY_X            equ 32*FRAMEMULTIPLIER      ; default max speed in subpixel/frame
 PLAYER_MAXVELOCITY_Y            equ 32*FRAMEMULTIPLIER
 PLAYER_ACCELERATION             equ 1*FRAMEMULTIPLIER       ; in subpixels per frame

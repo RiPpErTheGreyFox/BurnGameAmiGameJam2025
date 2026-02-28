@@ -78,23 +78,29 @@ Final day to-do list:
 *Keyboard handling introduced
 *Title screen with keyboard stuff to allow 1 or 2 players
 *Moving onto the game scene dependant on that
-Update level to be more interesting
-Rebalance game at 25hz with half frame time enabled and platforms reenabled
-Add new enemy spawns (maybe set them to multiple types? Dunno)
+*Update level to be more interesting
+*Add new enemy spawns (maybe set them to multiple types? Dunno)
+    map_ptr numbers 036, 060, 086, 107, 136, 156, 176, 192, 223
 *Have a game-over when running out of lives
     - quits to Amiga OS as fully restarting the game ain't working right
 *Update HUD to actually make sense
 *Add sounds gotten from Zee to the sound library
-Package and test on the 512kb chipmem A500 as that's the target
-Remember that animation system only allows for same number of frames in all animations
+*Package and test on the 512kb chipmem A500 as that's the target
+    -has weird graphical corruption when only chipmem is present
+        *solved, space character wasn't defined, use 'a' in the mean time as that is defined as blank
+*Remember that animation system only allows for same number of frames in all animations
+*Something is horribly wrong with the keyboard routines and it is glitchy on AOS 321 and outright destructive on AOS 13
+    - fixed by changing to a polling routine, suspect something is up with IRQ 2 (storage conflict?)
+
 Add jumping animation that overrides anything else
 Art pass on everything (leave until last to ensure most amount of time is spent on everything else, rushed art > not working game)
-Something is horribly wrong with the keyboard routines and it is glitchy on AOS 3.2.1 and outright destructive on AOS 1.3
+Rebalance game at 25hz with half frame time enabled and platforms reenabled
 Package and test on the 512kb chipmem A500 again after new art (don't go nuts)
+
 Get back to work on gameboy game any time permitting (or just play trains idk)
 
 Stretch goals:
-Multiple players, multiple characters, XP system for the run, bosses, minibosses, multiple enemy types, multiple levels, scrolling levels, using copper to draw high-res score/info at the top of the screen, animated level tile sets, weapon pickups, health pickups, pop ups with dialogue, music, sound effects, NTSC support
+*Multiple players, multiple characters, XP system for the run, bosses, minibosses, *multiple enemy types, multiple levels, *scrolling levels, using copper to draw high-res score/info at the top of the screen, animated level tile sets, weapon pickups, health pickups, pop ups with dialogue, music, *sound effects, NTSC support
 
 List of sounds we'll eventually need:
 Player:
