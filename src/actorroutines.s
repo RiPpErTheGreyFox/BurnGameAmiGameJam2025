@@ -447,7 +447,6 @@ HitActor:
     ;DEBUG
     bsr         DrawHUD
 
-
     cmpi        #ACTOR_TYPE_ENEMY,actor.type(a6)
     beq         .DamageAppliedEnemy
     cmpi        #ACTOR_TYPE_PLAYER,actor.type(a6)
@@ -467,6 +466,28 @@ HitActor:
 .SpecificDamageChecksOver
     cmpi        #0,d3
     ble         .HealthBelowzero
+    cmpi        #ACTOR_TYPE_PLAYER,actor.type(a6)
+    beq         .PlayHurtSoundPlayer
+    cmpi        #ACTOR_TYPE_ENEMY,actor.type(a6)
+    beq         .PlayHurtsoundEnemy
+    bra         .Return
+.PlayHurtSoundPlayer
+    ; player hurt, play sound
+    movem.l     d0-a6,-(sp)
+    lea         PLAYERDAMAGEDSAMPLE,a6
+    move.w      #PLAYERDAMAGEDSAMPLE_LEN/2,d0
+    move.w      0,d1
+    bsr         PlaySampleOnChannel
+    movem.l     (sp)+,d0-a6
+    bra         .Return
+.PlayHurtsoundEnemy
+    ; enemy hurt, play sound
+    movem.l     d0-a6,-(sp)
+    lea         ENEMYDAMAGEDSAMPLE,a6
+    move.w      #ENEMYDAMAGEDSAMPLE_LEN/2,d0
+    move.w      0,d1
+    bsr         PlaySampleOnChannel
+    movem.l     (sp)+,d0-a6
     bra         .Return
 .HealthBelowzero
     bsr         DespawnActor
@@ -474,11 +495,25 @@ HitActor:
     move.w      #PLAYER_RESPAWN_DURATION,actor.respawn_timer(a6)
     cmpi        #ACTOR_TYPE_ENEMY,actor.type(a6)
     beq         .IsEnemyTypeDead
+    ; player dead, play sound
+    movem.l     d0-a6,-(sp)
+    lea         PLAYERDEATHSAMPLE,a6
+    move.w      #PLAYERDEATHSAMPLE_LEN/2,d0
+    move.w      0,d1
+    bsr         PlaySampleOnChannel
+    movem.l     (sp)+,d0-a6
     bra         .Return
 .IsEnemyTypeDead
     move.w      #ACTOR_STATE_INACTIVE,actor.state(a6)
     move.w      #123,d0
     bsr         IncreaseScore
+    ; enemy dead, play sound
+    movem.l     d0-a6,-(sp)
+    lea         ENEMYDEATHSAMPLE,a6
+    move.w      #ENEMYDEATHSAMPLE_LEN/2,d0
+    move.w      0,d1
+    bsr         PlaySampleOnChannel
+    movem.l     (sp)+,d0-a6
 .Return
     movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
     rts

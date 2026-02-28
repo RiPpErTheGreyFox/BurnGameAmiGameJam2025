@@ -83,7 +83,7 @@ Rebalance game at 25hz with half frame time enabled and platforms reenabled
 Add new enemy spawns (maybe set them to multiple types? Dunno)
 Have a game-over when running out of lives
 Update HUD to actually make sense
-Add sounds gotten from Zee to the sound library
+*Add sounds gotten from Zee to the sound library
 Package and test on the 512kb chipmem A500 as that's the target
 Remember that animation system only allows for same number of frames in all animations
 Add jumping animation that overrides anything else

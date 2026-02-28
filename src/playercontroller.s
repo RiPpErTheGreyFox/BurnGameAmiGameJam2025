@@ -121,6 +121,15 @@ InitialisePlayer:
 ; actually spawns the dang player
 ; @params: a6 - player actor to spawn
 SpawnPlayer:
+
+    
+    movem.l     d0-a6,-(sp)
+    lea         PLAYERSPAWNSAMPLE,a6
+    move.w      #PLAYERSPAWNSAMPLE_LEN/2,d0
+    move.w      0,d1
+    bsr         PlaySampleOnChannel
+    movem.l     (sp)+,d0-a6
+
     move.w      #PLAYER_STARTING_POSX,d0
     move.w      #PLAYER_STARTING_POSY,d1
     move.w      #PLAYER_STARTING_POSX,actor.x(a6)                   ;actor.x               
@@ -229,7 +238,6 @@ FireProjectile:
     cmpi.w      #0,actor.fire_timer(a6)
     bne         .cantFire                                           ; if anything left in the fire timer, we can't shoot yet
 
-    
     move.w      actor.y(a6),d1
     addi.w      #16,d1
     move.w      actor.x(a6),d0
@@ -326,8 +334,8 @@ PlayerJump:
     move.w      #PLAYER_JUMP_DECELERATE_TIME,actor.jump_decel_timer(a6)
     ; play the jump sound
     movem.l     d0-a6,-(sp)
-    lea         JUMPSOUND,a6
-    move.w      #JUMPSOUND_LEN/2,d0
+    lea         PLAYERJUMPSAMPLE,a6
+    move.w      #PLAYERJUMPSAMPLE_LEN/2,d0
     move.w      0,d1
     bsr         PlaySampleOnChannel
     movem.l     (sp)+,d0-a6

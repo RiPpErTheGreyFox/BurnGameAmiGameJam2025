@@ -196,7 +196,3 @@ NumToString:
 
     movem.l     (sp)+,d0-a6                                         ; restore the registers off of the stack
     rts
-
-    SECTION hud_graphics_data,DATA_C                                ; segment loaded in CHIP RAM
-hud_font_gfx:  incbin "assets/gfx/HUDNumberFont.raw"
-hud_background_mask: incbin "assets/gfx/HUDNumberFont.mask"

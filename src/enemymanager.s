@@ -319,6 +319,13 @@ SpawnEnemy:
     cmpi.l      #0,d2
     beq         .spawnFailed
 .spawnSuccess:
+    movem.l     d0-a6,-(sp)
+    lea         ENEMYSPAWNSAMPLE,a6
+    move.w      #ENEMYSPAWNSAMPLE_LEN/2,d0
+    move.w      0,d1
+    bsr         PlaySampleOnChannel
+    movem.l     (sp)+,d0-a6
+
     move.w      d0,actor.x(a6)                                      ;actor.x               
     move.w      #0,actor.subpixel_x(a6)                             ;actor.subpixel_x      
     move.w      d1,actor.y(a6)                                      ;actor.y               

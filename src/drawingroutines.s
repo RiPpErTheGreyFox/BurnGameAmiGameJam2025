@@ -478,6 +478,9 @@ dbuffer2        ds.b (DISPLAY_PLANE_SIZE*N_PLANES)
 
 bgnd_surface  ds.b       (BGND_PLANE_SIZE*N_PLANES)                               ; invisible surface used for scrolling background
 
+    SECTION hud_graphics_data,DATA_C                                ; segment loaded in CHIP RAM
+hud_font_gfx:  incbin "assets/gfx/HUDNumberFont.raw"
+hud_background_mask: incbin "assets/gfx/HUDNumberFont.mask"
 
     SECTION graphics_data,DATA_C            ; segment loaded in CHIP RAM
 
