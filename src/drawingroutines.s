@@ -488,28 +488,36 @@ tileset         incbin "assets/gfx/DemoLevel1_tileset.raw"
 palette         incbin "assets/gfx/DemoLevel1.pal"
 
 PLAYERGFX:
-player_gfx      incbin "assets/gfx/testsprite.raw"                      ; ship spritesheet 96x96, 3cols x 3rows, frame size: 32x32
-player_mask     incbin "assets/gfx/testsprite.mask"
+player1_gfx      incbin "assets/gfx/PlayerOneTiles.raw"                      ; player spritesheet 96x96, 3cols x 3rows, frame size: 32x32
+player1_mask     incbin "assets/gfx/PlayerOneTiles.mask"
 PLAYERGFX_LEN=*-PLAYERGFX
 
-player_gfx_flip incbin "assets/gfx/testsprite_flipped.raw"
-player_mask_flip incbin "assets/gfx/testsprite_flipped.mask"
+player1_gfx_flip incbin "assets/gfx/PlayerOneTilesFlipped.raw"
+player1_mask_flip incbin "assets/gfx/PlayerOneTilesFlipped.mask"
+
+PLAYER2GFX:
+player2_gfx      incbin "assets/gfx/PlayerTwoTiles.raw"                      ; player spritesheet 96x96, 3cols x 3rows, frame size: 32x32
+player2_mask     incbin "assets/gfx/PlayerTwoTiles.mask"
+PLAYER2GFX_LEN=*-PLAYER2GFX
+
+player2_gfx_flip incbin "assets/gfx/PlayerTwoTilesFlipped.raw"
+player2_mask_flip incbin "assets/gfx/PlayerTwoTilesFlipped.mask"
 
 ENEMYGFX:
-enemy_gfx       incbin "assets/gfx/enemytestsprite.raw"
-enemy_mask      incbin "assets/gfx/enemytestsprite.mask"
+enemy_gfx       incbin "assets/gfx/EnemyNormalTiles.raw"
+enemy_mask      incbin "assets/gfx/EnemyNormalTiles.mask"
 ENEMYGFX_LEN=*-ENEMYGFX
 
-enemy_gfx_flip  incbin "assets/gfx/enemytestsprite_flipped.raw"
-enemy_mask_flip incbin "assets/gfx/enemytestsprite_flipped.mask"
+enemy_gfx_flip  incbin "assets/gfx/EnemyNormalTilesFlipped.raw"
+enemy_mask_flip incbin "assets/gfx/EnemyNormalTilesFlipped.mask"
 
 ENEMY2GFX:
-enemy2_gfx       incbin "assets/gfx/enemy2testsprite.raw"
-enemy2_mask      incbin "assets/gfx/enemytestsprite.mask"
+enemy2_gfx       incbin "assets/gfx/EnemyWandererTiles.raw"
+enemy2_mask      incbin "assets/gfx/EnemyWandererTiles.mask"
 ENEMY2GFX_LEN=*-ENEMYGFX
 
-enemy2_gfx_flip  incbin "assets/gfx/enemy2testsprite_flipped.raw"
-enemy2_mask_flip incbin "assets/gfx/enemytestsprite_flipped.mask"
+enemy2_gfx_flip  incbin "assets/gfx/EnemyWandererTilesFlipped.raw"
+enemy2_mask_flip incbin "assets/gfx/EnemyWandererTilesFlipped.mask"
 
     SECTION sprite_data,DATA_C              ; segment loaded into CHIP MEM
 

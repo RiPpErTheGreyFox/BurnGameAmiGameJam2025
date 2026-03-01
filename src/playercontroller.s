@@ -40,7 +40,7 @@ PLAYER_INV_STATE_DURATION       equ (50*5)/FRAMEMULTIPLIER  ; duration of the in
 PLAYER_RESPAWN_DURATION         equ (50*5)/FRAMEMULTIPLIER
 PLAYER_FLASH_DURATION           equ 3                       ; flashing duration (in frames)
 
-BASE_FIRE_INTERVAL              equ 7/FRAMEMULTIPLIER       ; delay between two shots for base bullets
+BASE_FIRE_INTERVAL              equ 75/FRAMEMULTIPLIER       ; delay between two shots for base bullets
 BULLET_TYPE_BASE                equ 0                       ; types of bullets
 
 ;----------- Variables --------
@@ -74,6 +74,11 @@ SpawnPlayers:
 .BothPlayers
     lea         pl_instance1,a6
     bsr         SpawnPlayer
+    ;           set player two graphics here
+    move.l      #player2_gfx,actor.bobdata(a6)                      ;actor.bobdata
+    move.l      #player2_gfx_flip,actor.bobdata_flip(a6)            ;actor.bobdata_flip         
+    move.l      #player2_mask,actor.mask(a6)                        ;actor.mask
+    move.l      #player2_mask_flip,actor.mask_flip(a6)              ;actor.mask_flip  
     rts
 
 ; creates a sane starting point for the player actor structure
@@ -86,10 +91,10 @@ InitialisePlayer:
     move.w      #0,actor.velocity_x(a6)                             ;actor.velocity_x      
     move.w      #0,actor.velocity_y(a6)                             ;actor.velocity_y
     move.w      #0,actor.direction(a6)                              ;actor.direction      
-    move.l      #player_gfx,actor.bobdata(a6)                       ;actor.bobdata
-    move.l      #player_gfx_flip,actor.bobdata_flip(a6)             ;actor.bobdata_flip         
-    move.l      #player_mask,actor.mask(a6)                         ;actor.mask
-    move.l      #player_mask_flip,actor.mask_flip(a6)               ;actor.mask_flip            
+    move.l      #player1_gfx,actor.bobdata(a6)                      ;actor.bobdata
+    move.l      #player1_gfx_flip,actor.bobdata_flip(a6)            ;actor.bobdata_flip         
+    move.l      #player1_mask,actor.mask(a6)                        ;actor.mask
+    move.l      #player1_mask_flip,actor.mask_flip(a6)              ;actor.mask_flip            
     move.w      #0,actor.current_frame(a6)                          ;actor.current_frame   
     move.w      #PLAYER_ANIM_IDLE,actor.current_anim(a6)            ;actor.current_anim    
     move.w      #1,actor.respectsBounds(a6)                         ;actor.respectsBounds  

@@ -463,7 +463,7 @@ HitActor:
     bra         .SpecificDamageChecksOver
 .DamageAppliedEnemy
     move.w      #ENEMY_INV_STATE_DURATION,actor.inv_timer(a6)
-    move.w      #20,actor.velocity_x(a6)
+    move.w      #12,actor.velocity_x(a6)
     move.w      #-60,actor.velocity_y(a6)
 
 .SpecificDamageChecksOver
