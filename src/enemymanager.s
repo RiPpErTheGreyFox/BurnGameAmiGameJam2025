@@ -30,7 +30,7 @@ ENEMY_MAX_ANIM_DELAY            equ 10/FRAMEMULTIPLIER      ; delay between two 
 ENEMY_INV_STATE_DURATION        equ (50)/FRAMEMULTIPLIER    ; duration of the invincible state (in frames)
 ENEMY_FLASH_DURATION            equ 3                       ; flashing duration (in frames)
 ENEMY_STARTING_HEALTH           equ 10
-ENEMY_STARTING_DAMAGE           equ 25
+ENEMY_STARTING_DAMAGE           equ 30
 ENEMY_SUBTYPE_NORMAL            equ 0
 ENEMY_SUBTYPE_WANDERER          equ 1
 ENEMY_WANDER_TIMER              equ 150
@@ -267,7 +267,7 @@ InitialiseEnemy:
     move.w      #ACTOR_TYPE_ENEMY,actor.type(a6)                    ;actor.type
     move.w      #ENEMY_STARTING_HEALTH,actor.health(a6)             ;actor.health
     move.w      #0,actor.jump_decel_timer(a6)                       ;actor.jump_decel_timer
-    move.w      #ENEMY_WANDER_TIMER+20,actor.fire_timer(a6)         ;actor.fire_timer      
+    move.w      #ENEMY_WANDER_TIMER+120,actor.fire_timer(a6)         ;actor.fire_timer      
     move.w      #1,actor.fire_delay(a6)                             ;actor.fire_delay      
     move.w      #ENEMY_SUBTYPE_NORMAL,actor.fire_type(a6)           ;actor.fire_type       
     move.l      #0,actor.controller_addr(a6)                        ;actor.controller_addr
@@ -357,7 +357,7 @@ SpawnEnemy:
     move.w      #1,actor.visible(a6)                                ;actor.visible 
     move.w      #ENEMY_STARTING_HEALTH,actor.health(a6)             ;actor.health        
     move.w      #0,actor.jump_decel_timer(a6)                       ;actor.jump_decel_timer
-    move.w      #ENEMY_WANDER_TIMER+80,actor.fire_timer(a6)         ;actor.fire_timer      
+    move.w      #ENEMY_WANDER_TIMER+120,actor.fire_timer(a6)         ;actor.fire_timer      
     move.w      #1,actor.fire_delay(a6)                             ;actor.fire_delay  
     ; get a random number for the enemy type
     bsr         GetRandomNumber

@@ -28,7 +28,7 @@ PLAYER_FRAME_SIZE               equ (PLAYER_WIDTH_B*PLAYER_HEIGHT)
 PLAYER_MASK_SIZE                equ (PLAYER_WIDTH_B*PLAYER_HEIGHT)
 PLAYER_SPRITESHEET_WIDTH        equ 96
 PLAYER_SPRITESHEET_HEIGHT       equ 96
-PLAYER_STARTING_HEALTH          equ 100
+PLAYER_STARTING_HEALTH          equ 90
 
 ; player states:
 ; - active: accepts input, can collide with enemies
