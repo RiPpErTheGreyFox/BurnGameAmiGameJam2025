@@ -112,7 +112,7 @@ test_string             dc.b        "TESTING",0,0
 player_select_1_str     dc.b        "PRESSa1:aONEaPLAYER",0,0
 player_select_1_str2    dc.b        "<JOYSTICKaPORTa2>",0,0
 player_select_2_str     dc.b        "PRESSa2:aTWOaPLAYER",0,0
-player_select_2_str2    dc.b        "<JOYSTICK PORTS 1\2>",0,0
+player_select_2_str2    dc.b        "<JOYSTICKaPORTSa1\2>",0,0
 lives_string            dc.b        "LIVES:",0,0
 score_string            dc.b        "SCORE:",0,0
 player1_name_string     dc.b        "PLAYERa1:",0,0

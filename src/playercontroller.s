@@ -253,7 +253,7 @@ FireProjectile:
     bne         .cantFire                                           ; if anything left in the fire timer, we can't shoot yet
 
     move.w      actor.y(a6),d1
-    addi.w      #16,d1
+    addi.w      #11,d1
     move.w      actor.x(a6),d0
     cmpi.w      #0,actor.direction(a6)
     bne         .ShootingRight

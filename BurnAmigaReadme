@@ -1,0 +1,22 @@
+Burn for the Amiga!
+Written in 68k assembly this is my first game for the Amiga platform not using
+BlitzBasic or some other tool, so some wonkiness is to be expected
+
+A side scrolling game inspired by the likes of Commander Keen, walk to the
+right, shoot fire demons, don't die
+
+Requirements:
+Tested on an OCS A500 with 512kb of Chipmem running Workbench 1.3
+Approximately 320000 bytes free are required for the game to run
+
+Also tested on an A500 running AmigaOS 3.2.2 and there were some stability
+issues so YMMV
+
+Controls:
+Q - quit game
+Joysticks are required to play, player 1 should be using a standard joystick
+connected to port 2, if playing with two players, the mouse is not supported
+
+Credits:
+Code, art and design: RiPpEr253 @ripper253.bsky.social on BSky
+Sound effects: Zee @scribblynoodle.art on BSky
