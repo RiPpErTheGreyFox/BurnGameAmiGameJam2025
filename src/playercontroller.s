@@ -100,7 +100,7 @@ InitialisePlayer:
     move.w      #PLAYER_SPRITESHEET_WIDTH,actor.spritesheetwidth(a6);actor.spritesheetwidth
     move.w      #PLAYER_SPRITESHEET_HEIGHT,actor.spritesheetheight(a6);actor.spritesheetheight
     move.w      #ACTOR_STATE_INACTIVE,actor.state(a6)               ;actor.state           
-    move.w      #PLAYER_MOVEMENT_STATE_NORMAL,actor.movement_state(a6);actor.movement_state  
+    move.w      #PLAYER_MOVEMENT_STATE_AIRBORNE,actor.movement_state(a6);actor.movement_state  
     move.w      #PLAYER_MAX_ANIM_DELAY,actor.anim_delay(a6)         ;actor.anim_delay      
     move.w      #PLAYER_MAX_ANIM_DELAY,actor.anim_timer(a6)         ;actor.anim_timer      
     move.w      #PLAYER_INV_STATE_DURATION,actor.inv_timer(a6)      ;actor.inv_timer
@@ -154,7 +154,7 @@ SpawnPlayer:
     move.w      d1,actor.y_middle(a6)                               ;actor.y_middle  
     move.w      #PLAYER_ANIM_IDLE,actor.current_anim(a6)            ;actor.current_anim
     move.w      #ACTOR_STATE_ACTIVE,actor.state(a6)                 ;actor.state           
-    move.w      #PLAYER_MOVEMENT_STATE_NORMAL,actor.movement_state(a6);actor.movement_state     
+    move.w      #PLAYER_MOVEMENT_STATE_AIRBORNE,actor.movement_state(a6);actor.movement_state     
     move.w      #PLAYER_MAX_ANIM_DELAY,actor.anim_timer(a6)         ;actor.anim_timer      
     move.w      #PLAYER_INV_STATE_DURATION,actor.inv_timer(a6)      ;actor.inv_timer
     move.w      #0,actor.respawn_timer(a6)                          ;actor.respawn_timer       

@@ -64,6 +64,9 @@ UpdateJoystick1:
     ; place the joystick data in d0
     move.w      JOY0DAT(a5),d0
     move.w      d0,d1
+    lsr.w       #1,d1
+    and.w       #$0101,d1
+    eor.w       d1,d0
 
     ; clear the data from the joystick to make sure we have fresh data
     move.w      #0,joystick.up(a6)
@@ -78,18 +81,17 @@ UpdateJoystick1:
     beq.s       .no_down
     move.w      #1,joystick.down(a6)
 .no_down:
-    btst        #1,d0
+    btst        #8,d0
     beq.s       .no_up
     move.w      #1,joystick.up(a6)
 .no_up:
 
     ; horizontal movement
-    lsr.w       #8,d1
-    btst        #0,d1
+    btst        #1,d0
     beq.s       .no_right
     move.w      #1,joystick.right(a6)
 .no_right:
-    btst        #1,d1
+    btst        #9,d0
     beq.s       .no_left
     move.w      #1,joystick.left(a6)
 .no_left:

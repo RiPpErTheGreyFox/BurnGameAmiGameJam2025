@@ -90,11 +90,14 @@ Final day to-do list:
         *solved, space character wasn't defined, use 'a' in the mean time as that is defined as blank
 *Remember that animation system only allows for same number of frames in all animations
 *Something is horribly wrong with the keyboard routines and it is glitchy on AOS 321 and outright destructive on AOS 13
-    - fixed by changing to a polling routine, suspect something is up with IRQ 2 (storage conflict?)
+    *fixed by changing to a polling routine, suspect something is up with IRQ 2 (storage conflict?)
+*Add jumping animation that overrides anything else
 
-Add jumping animation that overrides anything else
-Art pass on everything (leave until last to ensure most amount of time is spent on everything else, rushed art > not working game)
-Rebalance game at 25hz with half frame time enabled and platforms reenabled
+*Fix Player 1 joystick being weird
+Art pass on actors (leave until last to ensure most amount of time is spent on everything else, rushed art > not working game)
+    - need players and two fire demons
+Balance pass on firing speed and healths (game should be simple but not impossible to lose)
+Rebalance game at 25hz with half frame time enabled? (if it's mostly fine then just leave it)
 Package and test on the 512kb chipmem A500 again after new art (don't go nuts)
 
 Get back to work on gameboy game any time permitting (or just play trains idk)

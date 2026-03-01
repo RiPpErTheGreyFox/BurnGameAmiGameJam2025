@@ -352,22 +352,25 @@ UpdateAnimation:
     move.w      actor.current_frame(a6),d6                          ; d6 = current anim frame
     move.w      actor.anim_timer(a6),d7                             ; d7 = current frame timer
 
+    ; if velocity is anything but zero, then walk animation
     tst         d4
     beq         .idleAnim
-    blt         .leftAnim
-    bgt         .rightAnim
+    bne         .walkAnim
 
 .idleAnim
     move.w      #PLAYER_ANIM_IDLE,d1                                ; swap the animation
-    bra         .EndAnimSwapCheck
-.leftAnim
-    move.w      #PLAYER_ANIM_JUMP,d1
-    bra         .EndAnimSwapCheck
-.rightAnim
+    bra         .EndIdleAnimCheck
+.walkAnim
     move.w      #PLAYER_ANIM_WALK,d1
-    bra         .EndAnimSwapCheck
-.EndAnimSwapCheck:
+    bra         .EndIdleAnimCheck
+.EndIdleAnimCheck:
+    ; check to see if we're airborne, if we are, then jump animation
 
+    cmpi        #PLAYER_MOVEMENT_STATE_AIRBORNE,actor.movement_state(a6)
+    bne         .EndJumpAnimCheck
+.JumpAnim:
+    move.w      #PLAYER_ANIM_JUMP,d1
+.EndJumpAnimCheck:
 .UpdateCurrentFrame:
     ; decrement the timer
     ; if timer = 0 then swap frame
